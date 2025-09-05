@@ -172,28 +172,54 @@
   ];
 
   // ===== SLUGIFY PARA IMÁGENES =====
+  // mapas y excepciones corregidas (claves tal cual aparecen en el roster)
   const SPECIAL_SLUGS = {
-    "The Ghost Face":"ghost_face",
-    "The Demogorgon":"demogorgon",
-    "The Onryō":"onryo",
-    "The Good Guy":"good_guy",
-    "The Skull Merchant":"skull_merchant",
-    "The Deathslinger":"deathslinger",
-    "The Executioner":"executioner",
-    "The Dark Lord":"dark_lord",
-    "The Lich":"lich",
-    "The Unknown":"unknown",
-    "The Mastermind":"mastermind",
-    "The Xenomorph":"xenomorph",
-    "The Houndmaster":"houndmaster",
-    "The Animatronic":"animatronic",
-    "The Ghoul":"ghoul"
+    "The Ghost Face": "ghostface",
+    "The Demogorgon": "demogorgon",
+    "The Onryō": "onryo",
+    "The Shape": "myers",
+    "The Cannibal": "leatherface",
+    "The Nightmare": "freddy",
+    "The Executioner": "pyramid_head",
+    "The Clown": "clown",
+    "The Spirit": "spirit",
+    "The Legion": "legion",
+    "The Plague": "plague",
+    "The Oni": "oni",
+    "The Dredge": "dredge",
+    "The Mastermind": "wesker",
+    "The Knight": "knight",
+    "The Skull Merchant": "skull_merchant",
+    "The Singularity": "singularity",
+    "The Xenomorph": "xenomorph",
+    "The Good Guy": "chucky",
+    "The Unknown": "unknown",
+    "The Lich": "vecna",
+    "The Dark Lord": "dracula",
+    "The Animatronic": "springtrap",
+    "The Ghoul": "ghoul",
+    "The Houndmaster": "houndmaster",
+    "The Deathslinger": "deathslinger",
+    "The Cenobite": "pinhead"
   };
+  // versión normalizada para búsquedas robustas (lowercase + trim)
+  const SPECIAL_SLUGS_NORM = {};
+  Object.keys(SPECIAL_SLUGS).forEach(k => { SPECIAL_SLUGS_NORM[k.toLowerCase().trim()] = SPECIAL_SLUGS[k]; });
+
   function slugifyKiller(name){
-    if (SPECIAL_SLUGS[name]) return SPECIAL_SLUGS[name];
-    return name.replace(/^The\s+/i,"")
-               .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-               .toLowerCase().replace(/\s+/g,"_");
+    if(!name) return "";
+    const key = String(name).toLowerCase().trim();
+    if (SPECIAL_SLUGS_NORM[key]) return SPECIAL_SLUGS_NORM[key];
+    // si el nombre viene con %20 u otros encodings, intentar decodificar primero
+    let decoded = String(name);
+    try { decoded = decodeURIComponent(decoded); } catch(e){}
+    return decoded
+      .replace(/^the\s+/i,"")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+      .toLowerCase().trim()
+      .replace(/\s+/g,"_")           // espacios => _
+      .replace(/%20/g,"_")          // por si quedan %20 literales
+      .replace(/[^a-z0-9_]+/g,"");  // quitar caracteres no permitidos
   }
   function killerImgUrl(base, name){ return `${base}${slugifyKiller(name)}.png`; }
 
