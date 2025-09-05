@@ -230,8 +230,7 @@
         rosterSnapshot=$("rosterSnapshot"),
         markPlayedBtn=$("markPlayedBtn"), skipBtn=$("skipBtn"), resetCycleBtn=$("resetCycleBtn"),
         exportBtn=$("exportBtn"), importBtn=$("importBtn"), importFile=$("importFile"),
-        useNamesChk=$("useNamesChk"), rosterMode=$("rosterMode"), recentWindowSel=$("recentWindow"),
-        imgBaseInput=$("imgBase");
+        useNamesChk=$("useNamesChk"), rosterMode=$("rosterMode"), recentWindowSel=$("recentWindow");
 
   let userDocRef=null;
   const state = {
@@ -374,11 +373,7 @@
     state.prefs.recentWindow = Number(recentWindowSel.value);
     await updateDoc(userDocRef,{prefs:state.prefs,updatedAt:serverTimestamp()});
   });
-  imgBaseInput.addEventListener("change", async ()=>{
-    state.prefs.imgBase = DEFAULT_IMG_BASE.trim();
-    await updateDoc(userDocRef,{prefs:state.prefs,updatedAt:serverTimestamp()});
-    render();
-  });
+  // imgBaseInput eliminado, ya no se usa
 
   // Botones y atajos
   $("markPlayedBtn").addEventListener("click",()=>advance(true));
@@ -426,6 +421,10 @@
   signInAnonymously(auth).catch(err=>{
     authStatus.textContent = `Error de autenticación: ${err.code} — ${err.message}`;
     console.error(err);
+  });
+</script>
+</body>
+</html>
   });
 </script>
 </body>
