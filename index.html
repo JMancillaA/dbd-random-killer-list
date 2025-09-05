@@ -190,7 +190,24 @@
       .replace(/%20/g,"_")          // por si quedan %20 literales
       .replace(/[^a-z0-9_]+/g,"");  // quitar caracteres no permitidos
   }
-  function killerImgUrl(base, name){ return `${base}${slugifyKiller(name)}.png`; }
+  function killerImgUrl(base, name){
+    // Si name es undefined/null, retorna un placeholder directamente
+    if (!name) return "";
+    return `${base}${slugifyKiller(name)}.png`;
+  }
+
+  function renderImage(name){
+    // Si name es undefined/null, muestra placeholder y sale
+    if (!name) {
+      heroImg.src = "";
+      heroImg.alt = "";
+      return;
+    }
+    const url = killerImgUrl(state.prefs.imgBase, name);
+    heroImg.src = url;
+    heroImg.onerror = () => { heroImg.onerror=null; heroImg.src = `data:image/svg+xml,` +
+      encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><rect width='100%' height='100%' fill='%230c0e12'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%237d869c' font-family='sans-serif' font-size='18'>${name||"?"}</text></svg>`);}
+  }
 
   // ===== APP STATE =====
   const app = initializeApp(firebaseConfig);
@@ -221,13 +238,6 @@
   function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
   const buildRoster = mode => (mode==="ids" ? Array.from({length:KILLERS.length},(_,i)=>String(i+1)) : [...KILLERS]);
 
-  function renderImage(name){
-    const url = killerImgUrl(state.prefs.imgBase, name);
-    heroImg.src = url;
-    heroImg.onerror = () => { heroImg.onerror=null; heroImg.src = `data:image/svg+xml,` +
-      encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><rect width='100%' height='100%' fill='%230c0e12'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%237d869c' font-family='sans-serif' font-size='18'>${name}</text></svg>`);}
-  }
-
   function render(){
     controlsCard.style.display="block"; mainCard.style.display="block"; listCard.style.display="block";
     cycleEl.textContent=state.cycle; totalEl.textContent=state.total;
@@ -237,22 +247,24 @@
       nextEl.textContent="—"; posEl.textContent="—"; emptyMsg.style.display="block";
       heroImg.src=""; heroImg.alt="";
     }else{
-      const currentName = state.roster[remainingIdxs[0]];
-      nextEl.textContent=currentName; posEl.textContent=String(state.index+1); emptyMsg.style.display="none";
+      const currentIdx = remainingIdxs[0];
+      const currentName = state.roster && typeof currentIdx === "number" ? state.roster[currentIdx] : null;
+      nextEl.textContent=currentName || "—";
+      posEl.textContent=String(state.index+1); emptyMsg.style.display="none";
       renderImage(currentName);
     }
 
     // Chips restantes
     remainingList.innerHTML = remainingIdxs.map(i=>{
-      const name = state.roster[i];
+      const name = state.roster && typeof i === "number" ? state.roster[i] : null;
       const img = killerImgUrl(state.prefs.imgBase, name);
-      return `<span class="pill"><img src="${img}" alt="" onerror="this.src='';this.style.background='#0c0e12'">${name}</span>`;
+      return `<span class="pill"><img src="${img}" alt="" onerror="this.src='';this.style.background='#0c0e12'">${name||"—"}</span>`;
     }).join("");
 
     // Historial
     const hist = (state.history.slice(-12).reverse());
     recentHistory.innerHTML = hist.length ? `<ul>${hist.map(v=>`<li>${v}</li>`).join("")}</ul>`
-                                          : `<p class="muted">Sin historial aún.</p>`;
+                                        : `<p class="muted">Sin historial aún.</p>`;
   }
 
   async function ensureDoc(){
@@ -398,11 +410,6 @@
   signInAnonymously(auth).catch(err=>{
     authStatus.textContent = `Error de autenticación: ${err.code} — ${err.message}`;
     console.error(err);
-  });
-</script>
-</body>
-</html>
-</html>
   });
 </script>
 </body>
