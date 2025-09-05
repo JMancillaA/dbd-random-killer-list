@@ -332,19 +332,25 @@
   });
 
   // Preferencias
-  useNamesChk.addEventListener("change", async ()=>{
-    state.prefs.useNames = useNamesChk.checked;
-    await updateDoc(userDocRef,{prefs:state.prefs,updatedAt:serverTimestamp()}); render();
-  });
-  rosterMode.addEventListener("change", async ()=>{
-    state.prefs.mode = rosterMode.value;
-    await updateDoc(userDocRef,{prefs:state.prefs,updatedAt:serverTimestamp()});
-    await resetCycle(true);
-  });
-  recentWindowSel.addEventListener("change", async ()=>{
-    state.prefs.recentWindow = Number(recentWindowSel.value);
-    await updateDoc(userDocRef,{prefs:state.prefs,updatedAt:serverTimestamp()});
-  });
+  if (useNamesChk) {
+    useNamesChk.addEventListener("change", async ()=>{
+      state.prefs.useNames = useNamesChk.checked;
+      await updateDoc(userDocRef,{prefs:state.prefs,updatedAt:serverTimestamp()}); render();
+    });
+  }
+  if (rosterMode) {
+    rosterMode.addEventListener("change", async ()=>{
+      state.prefs.mode = rosterMode.value;
+      await updateDoc(userDocRef,{prefs:state.prefs,updatedAt:serverTimestamp()});
+      await resetCycle(true);
+    });
+  }
+  if (recentWindowSel) {
+    recentWindowSel.addEventListener("change", async ()=>{
+      state.prefs.recentWindow = Number(recentWindowSel.value);
+      await updateDoc(userDocRef,{prefs:state.prefs,updatedAt:serverTimestamp()});
+    });
+  }
   // imgBaseInput eliminado, ya no se usa
 
   // Botones y atajos
@@ -396,12 +402,6 @@
 </script>
 </body>
 </html>
-  signInAnonymously(auth).catch(err=>{
-    authStatus.textContent = `Error de autenticación: ${err.code} — ${err.message}`;
-    console.error(err);
-  });
-</script>
-</body>
 </html>
   });
 </script>
