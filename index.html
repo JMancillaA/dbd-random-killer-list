@@ -89,12 +89,6 @@
           </select>
         </label>
       </div>
-      <div class="formline">
-        <label>Base URL de imágenes:
-          <input id="imgBase" type="text"
-                 value="https://otz-addon-tierlist.pages.dev/public/killers/" />
-        </label>
-      </div>
     </div>
     <p class="muted" style="margin-top:8px">
       Atajos: <span class="kbd">J</span> Marcar jugado · <span class="kbd">K</span> Saltar · <span class="kbd">R</span> Reiniciar ciclo
@@ -137,10 +131,6 @@
       <div id="rosterSnapshot"></div>
     </details>
   </div>
-
-  <footer class="muted" style="margin-top:10px">
-    Imágenes: base por defecto de otz-addon-tierlist (puedes cambiar el origen arriba). Si una imagen no existe, se usa un placeholder.
-  </footer>
 </div>
 
 <!-- Firebase + App -->
@@ -228,6 +218,8 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
   enableIndexedDbPersistence(db).catch(()=>{});
+  const DEFAULT_IMG_BASE = "https://otz-addon-tierlist.pages.dev/public/killers/";
+
 
   const $ = id => document.getElementById(id);
   const authStatus=$("authStatus"), syncStatus=$("syncStatus"),
@@ -245,7 +237,7 @@
   const state = {
     uid:null, cycle:1, queue:[], index:0, history:[],
     roster:[], total:0,
-    prefs:{ useNames:true, mode:"current", recentWindow:5, imgBase:imgBaseInput.value }
+    prefs:{ useNames:true, mode:"current", recentWindow:5, imgBase:DEFAULT_IMG_BASE }
   };
 
   // Utilidades
@@ -383,7 +375,7 @@
     await updateDoc(userDocRef,{prefs:state.prefs,updatedAt:serverTimestamp()});
   });
   imgBaseInput.addEventListener("change", async ()=>{
-    state.prefs.imgBase = imgBaseInput.value.trim();
+    state.prefs.imgBase = DEFAULT_IMG_BASE.trim();
     await updateDoc(userDocRef,{prefs:state.prefs,updatedAt:serverTimestamp()});
     render();
   });
@@ -407,7 +399,7 @@
       authStatus.textContent=`Autenticado (anónimo). UID: ${user.uid}`;
       userDocRef = doc(db,"users",user.uid,"dbdQueue","current");
       // Prefs iniciales: tomar imgBase actual
-      state.prefs.imgBase = imgBaseInput.value;
+      state.prefs.imgBase = DEFAULT_IMG_BASE;
       await ensureDoc();
       if(unsub) unsub();
       unsub = onSnapshot(userDocRef,(snap)=>{
@@ -420,7 +412,7 @@
           useNamesChk.checked=!!state.prefs.useNames;
           rosterMode.value=state.prefs.mode||"current";
           recentWindowSel.value=String(state.prefs.recentWindow??5);
-          imgBaseInput.value=state.prefs.imgBase || imgBaseInput.value;
+          DEFAULT_IMG_BASE=state.prefs.imgBase || DEFAULT_IMG_BASE;
           render(); syncStatus.textContent="Sincronizado.";
         } else {
           syncStatus.textContent="Documento no encontrado.";
