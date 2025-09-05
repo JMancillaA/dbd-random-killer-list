@@ -407,7 +407,6 @@
           useNamesChk.checked=!!state.prefs.useNames;
           rosterMode.value=state.prefs.mode||"current";
           recentWindowSel.value=String(state.prefs.recentWindow??5);
-          DEFAULT_IMG_BASE=state.prefs.imgBase || DEFAULT_IMG_BASE;
           render(); syncStatus.textContent="Sincronizado.";
         } else {
           syncStatus.textContent="Documento no encontrado.";
