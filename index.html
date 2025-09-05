@@ -3,29 +3,69 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>DBD Killer Randomizer (Actualizado 2025-09-05)</title>
+  <title>DBD Killer Randomizer — con retratos</title>
+  <meta name="color-scheme" content="dark light" />
   <style>
-    :root { font-family: system-ui, Arial, sans-serif; color-scheme: light dark; }
-    body { margin: 24px; max-width: 880px; }
-    h1 { margin: 0 0 12px; }
-    .card { border: 1px solid #ddd; border-radius: 10px; padding: 16px; margin: 16px 0; }
-    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items:center; }
-    button { padding: 10px 14px; border: 1px solid #bbb; border-radius: 8px; cursor: pointer; }
-    button:disabled { opacity: .6; cursor: not-allowed; }
-    .muted { color: #666; font-size: 0.95rem; }
-    .pill { display:inline-block; padding:4px 10px; border:1px solid #ccc; border-radius:999px; margin:3px 5px 0 0; }
-    details summary { cursor: pointer; }
-    .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background:#f5f5f5; padding:2px 6px; border-radius:6px; }
-    .grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 8px 12px; }
-    label { font-size: 0.95rem; }
-    input[type="checkbox"] { transform: translateY(1px); }
+    :root{
+      --bg:#0e0f12;--card:#16181d;--muted:#8a90a2;--text:#e8ecf3;--accent:#7aa2ff;
+      --border:#20232b;--chip:#1b1f27;--chip-border:#2a2f3a;--ok:#27c3a7;--warn:#ffcc66
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;background:radial-gradient(1000px 600px at 20% -10%,#182036,transparent),
+      radial-gradient(900px 500px at 120% 10%,#211a3a,transparent),var(--bg);
+      color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      padding:28px 16px 60px
+    }
+    .wrap{max-width:1100px;margin:0 auto}
+    h1{margin:0 0 8px}
+    p.muted{color:var(--muted);margin:0 0 12px}
+    .card{
+      background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));
+      border:1px solid var(--border);border-radius:14px;padding:16px;margin:16px 0;
+      box-shadow:0 10px 30px rgba(0,0,0,.25);backdrop-filter:blur(8px)
+    }
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    button{
+      padding:10px 14px;border:1px solid var(--border);border-radius:10px;cursor:pointer;
+      background:#1b1f27;color:var(--text);transition:transform .05s,background .2s,border-color .2s
+    }
+    button:hover{background:#212633;border-color:#2b3341}
+    button:active{transform:translateY(1px)}
+    .btn-ok{background:#1f3a35;border-color:#2c5c50}
+    .btn-warn{background:#3a2f1f;border-color:#6a5638}
+    .muted{color:var(--muted)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+    details summary{cursor:pointer}
+    /* Hero */
+    .hero{display:grid;grid-template-columns:160px 1fr;gap:14px;align-items:center}
+    .hero .art{
+      width:160px;height:160px;border-radius:12px;overflow:hidden;border:1px solid var(--border);
+      background:#0c0e12;display:grid;place-items:center
+    }
+    .hero .art img{width:100%;height:100%;object-fit:cover;display:block}
+    .hero .meta small{color:var(--muted)}
+    .hero .title{font-size:1.6rem;font-weight:700;margin:2px 0 8px}
+    /* Chips con mini retrato */
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--chip-border);
+      border-radius:999px;background:var(--chip);margin:4px 6px 0 0;white-space:nowrap
+    }
+    .pill img{width:22px;height:22px;border-radius:50%;object-fit:cover;flex:0 0 auto;background:#0c0e12}
+    .formline{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    input[type="text"]{
+      background:#10141b;border:1px solid #2c3544;color:var(--text);padding:8px 10px;border-radius:8px;min-width:260px
+    }
+    select{background:#10141b;border:1px solid #2c3544;color:var(--text);padding:8px 10px;border-radius:8px}
+    label{font-size:.95rem}
+    .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#11151c;border:1px solid #2c3544;padding:2px 6px;border-radius:6px}
   </style>
 </head>
 <body>
+<div class="wrap">
   <h1>DBD Killer Randomizer</h1>
-  <p class="muted">
-    Genera un orden aleatorio de killers sin repetir hasta completar el ciclo. Persistencia en la nube con Firebase.
-  </p>
+  <p class="muted">Orden aleatorio sin repetidos hasta completar el ciclo. Persistencia en Firebase.</p>
 
   <div class="card">
     <div id="authStatus" class="muted">Conectando…</div>
@@ -34,42 +74,53 @@
 
   <div class="card" id="controlsCard" style="display:none;">
     <div class="grid">
-      <label><input type="checkbox" id="useNamesChk" checked> Usar nombres oficiales de killers</label>
-      <label title="Evita repetir uno de los últimos X ya jugados al saltar/generar">
-        Evitar repetidos recientes:
-        <select id="recentWindow">
-          <option value="0">Off</option>
-          <option value="3">3</option>
-          <option value="5" selected>5</option>
-          <option value="8">8</option>
-          <option value="10">10</option>
-        </select>
-      </label>
-      <label>
-        Modo lista:
-        <select id="rosterMode">
-          <option value="current" selected>Roster actual (nombres)</option>
-          <option value="ids">IDs 1–N</option>
-        </select>
-      </label>
+      <div class="formline">
+        <label><input type="checkbox" id="useNamesChk" checked> Usar nombres oficiales</label>
+        <label>Evitar repetidos recientes:
+          <select id="recentWindow">
+            <option value="0">Off</option><option value="3">3</option>
+            <option value="5" selected>5</option><option value="8">8</option><option value="10">10</option>
+          </select>
+        </label>
+        <label>Modo lista:
+          <select id="rosterMode">
+            <option value="current" selected>Roster actual (nombres)</option>
+            <option value="ids">IDs 1–N</option>
+          </select>
+        </label>
+      </div>
+      <div class="formline">
+        <label>Base URL de imágenes:
+          <input id="imgBase" type="text"
+                 value="https://otz-addon-tierlist.pages.dev/public/killers/" />
+        </label>
+      </div>
     </div>
+    <p class="muted" style="margin-top:8px">
+      Atajos: <span class="kbd">J</span> Marcar jugado · <span class="kbd">K</span> Saltar · <span class="kbd">R</span> Reiniciar ciclo
+    </p>
   </div>
 
   <div class="card" id="mainCard" style="display:none;">
-    <p><strong>Ciclo actual: <span id="cycle">–</span></strong></p>
-    <p>
-      Siguiente: <strong id="nextItem" style="font-size:1.4rem;">–</strong>
-      <span class="muted">(<span id="position">–</span> de <span id="total">–</span>)</span>
-    </p>
-    <div class="row">
-      <button id="markPlayedBtn">Marcar como jugado</button>
-      <button id="skipBtn" title="Pasa al siguiente sin marcar jugado">Saltar</button>
-      <button id="resetCycleBtn" title="Fuerza nueva lista aleatoria">Reiniciar ciclo</button>
-      <button id="exportBtn" title="Exporta tu estado JSON">Exportar</button>
-      <input type="file" id="importFile" accept="application/json" style="display:none;">
-      <button id="importBtn" title="Importa un estado JSON">Importar</button>
+    <div class="hero">
+      <div class="art"><img id="heroImg" alt="Retrato" loading="eager"></div>
+      <div class="meta">
+        <small>Ciclo actual: <strong id="cycle">–</strong></small>
+        <div class="title"><span id="nextItem">–</span></div>
+        <div class="muted">Posición <span id="position">–</span> de <span id="total">–</span></div>
+        <div class="row" style="margin-top:10px">
+          <button id="markPlayedBtn" class="btn-ok">Marcar como jugado</button>
+          <button id="skipBtn">Saltar</button>
+          <button id="resetCycleBtn" class="btn-warn">Reiniciar ciclo</button>
+          <button id="exportBtn">Exportar</button>
+          <input type="file" id="importFile" accept="application/json" style="display:none;">
+          <button id="importBtn">Importar</button>
+        </div>
+        <p class="muted" id="emptyMsg" style="display:none;margin-top:8px">
+          Lista terminada. Se creó un nuevo ciclo automáticamente.
+        </p>
+      </div>
     </div>
-    <p class="muted" id="emptyMsg" style="display:none;">Lista terminada. Se creó un nuevo ciclo automáticamente.</p>
   </div>
 
   <div class="card" id="listCard" style="display:none;">
@@ -87,16 +138,19 @@
     </details>
   </div>
 
-  <!-- Firebase SDKs (v10 modular) -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import {
-      getFirestore, enableIndexedDbPersistence,
-      doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction, serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  <footer class="muted" style="margin-top:10px">
+    Imágenes: base por defecto de otz-addon-tierlist (puedes cambiar el origen arriba). Si una imagen no existe, se usa un placeholder.
+  </footer>
+</div>
 
-    const firebaseConfig = {
+<!-- Firebase + App -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, enableIndexedDbPersistence, doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // ===== CONFIG FIREBASE =====
+  const firebaseConfig = {
     apiKey: "AIzaSyDnv6pL350yl5hCHhwt3U46rJ7lDv3aRv8",
     authDomain: "dbd-random-list.firebaseapp.com",
     projectId: "dbd-random-list",
@@ -104,309 +158,257 @@
     messagingSenderId: "504438131037",
     appId: "1:504438131037:web:904681ff503e2c73c500b4",
     measurementId: "G-724ZR5052C"
-    };
+  };
+  // ===== ROSTER =====
+  const KILLERS = [
+    "The Trapper","The Wraith","The Hillbilly","The Nurse","The Shape",
+    "The Hag","The Doctor","The Huntress","The Cannibal","The Nightmare",
+    "The Pig","The Clown","The Spirit","The Legion","The Plague",
+    "The Ghost Face","The Demogorgon","The Oni","The Deathslinger","The Executioner",
+    "The Blight","The Twins","The Trickster","The Nemesis","The Cenobite",
+    "The Artist","The Onryō","The Dredge","The Mastermind","The Knight",
+    "The Skull Merchant","The Singularity","The Xenomorph","The Good Guy","The Unknown",
+    "The Lich","The Dark Lord","The Animatronic","The Ghoul","The Houndmaster"
+  ];
 
-    const KILLERS_2025_09_05 = [
-      "The Trapper","The Wraith","The Hillbilly","The Nurse","The Shape",
-      "The Hag","The Doctor","The Huntress","The Cannibal","The Nightmare",
-      "The Pig","The Clown","The Spirit","The Legion","The Plague",
-      "The Ghost Face","The Demogorgon","The Oni","The Deathslinger","The Executioner",
-      "The Blight","The Twins","The Trickster","The Nemesis","The Cenobite",
-      "The Artist","The Onryō","The Dredge","The Mastermind","The Knight",
-      "The Skull Merchant","The Singularity","The Xenomorph","The Good Guy","The Unknown",
-      "The Lich","The Dark Lord","The Animatronic","The Ghoul","The Houndmaster"
-    ];
+  // ===== SLUGIFY PARA IMÁGENES =====
+  const SPECIAL_SLUGS = {
+    "The Ghost Face":"ghost_face",
+    "The Demogorgon":"demogorgon",
+    "The Onryō":"onryo",
+    "The Good Guy":"good_guy",
+    "The Skull Merchant":"skull_merchant",
+    "The Deathslinger":"deathslinger",
+    "The Executioner":"executioner",
+    "The Dark Lord":"dark_lord",
+    "The Lich":"lich",
+    "The Unknown":"unknown",
+    "The Mastermind":"mastermind",
+    "The Xenomorph":"xenomorph",
+    "The Houndmaster":"houndmaster",
+    "The Animatronic":"animatronic",
+    "The Ghoul":"ghoul"
+  };
+  function slugifyKiller(name){
+    if (SPECIAL_SLUGS[name]) return SPECIAL_SLUGS[name];
+    return name.replace(/^The\s+/i,"")
+               .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+               .toLowerCase().replace(/\s+/g,"_");
+  }
+  function killerImgUrl(base, name){ return `${base}${slugifyKiller(name)}.png`; }
 
-    //======================
-    // 3) UTILIDADES
-    //======================
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    enableIndexedDbPersistence(db).catch(() => { console.warn("Persistencia offline no disponible en este entorno."); });
+  // ===== APP STATE =====
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  enableIndexedDbPersistence(db).catch(()=>{});
 
-    const $ = (id) => document.getElementById(id);
-    const authStatus = $("authStatus");
-    const syncStatus = $("syncStatus");
-    const controlsCard = $("controlsCard");
-    const mainCard = $("mainCard");
-    const listCard = $("listCard");
-    const cycleEl = $("cycle");
-    const nextEl = $("nextItem");
-    const posEl = $("position");
-    const totalEl = $("total");
-    const emptyMsg = $("emptyMsg");
-    const remainingList = $("remainingList");
-    const recentHistory = $("recentHistory");
-    const rosterSnapshot = $("rosterSnapshot");
-    const markPlayedBtn = $("markPlayedBtn");
-    const skipBtn = $("skipBtn");
-    const resetCycleBtn = $("resetCycleBtn");
-    const exportBtn = $("exportBtn");
-    const importBtn = $("importBtn");
-    const importFile = $("importFile");
-    const useNamesChk = $("useNamesChk");
-    const rosterMode = $("rosterMode");
-    const recentWindowSel = $("recentWindow");
+  const $ = id => document.getElementById(id);
+  const authStatus=$("authStatus"), syncStatus=$("syncStatus"),
+        controlsCard=$("controlsCard"), mainCard=$("mainCard"), listCard=$("listCard"),
+        heroImg=$("heroImg"), cycleEl=$("cycle"), nextEl=$("nextItem"),
+        posEl=$("position"), totalEl=$("total"), emptyMsg=$("emptyMsg"),
+        remainingList=$("remainingList"), recentHistory=$("recentHistory"),
+        rosterSnapshot=$("rosterSnapshot"),
+        markPlayedBtn=$("markPlayedBtn"), skipBtn=$("skipBtn"), resetCycleBtn=$("resetCycleBtn"),
+        exportBtn=$("exportBtn"), importBtn=$("importBtn"), importFile=$("importFile"),
+        useNamesChk=$("useNamesChk"), rosterMode=$("rosterMode"), recentWindowSel=$("recentWindow"),
+        imgBaseInput=$("imgBase");
 
-    let userDocRef = null;
-    const state = {
-      uid: null,
-      cycle: 1,
-      queue: [],      // indices de rosterSnapshot para recorrer
-      index: 0,       // puntero al siguiente
-      history: [],    // historial de valores "visibles" (string o número)
-      roster: [],     // roster congelado al crear el ciclo
-      total: 0,
-      prefs: { useNames: true, mode: "current", recentWindow: 5 }
-    };
+  let userDocRef=null;
+  const state = {
+    uid:null, cycle:1, queue:[], index:0, history:[],
+    roster:[], total:0,
+    prefs:{ useNames:true, mode:"current", recentWindow:5, imgBase:imgBaseInput.value }
+  };
 
-    function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
+  // Utilidades
+  function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+  const buildRoster = mode => (mode==="ids" ? Array.from({length:KILLERS.length},(_,i)=>String(i+1)) : [...KILLERS]);
+
+  function renderImage(name){
+    const url = killerImgUrl(state.prefs.imgBase, name);
+    heroImg.src = url;
+    heroImg.onerror = () => { heroImg.onerror=null; heroImg.src = `data:image/svg+xml,` +
+      encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><rect width='100%' height='100%' fill='%230c0e12'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%237d869c' font-family='sans-serif' font-size='18'>${name}</text></svg>`);}
+  }
+
+  function render(){
+    controlsCard.style.display="block"; mainCard.style.display="block"; listCard.style.display="block";
+    cycleEl.textContent=state.cycle; totalEl.textContent=state.total;
+    const remainingIdxs = state.queue.slice(state.index);
+
+    if (remainingIdxs.length===0){
+      nextEl.textContent="—"; posEl.textContent="—"; emptyMsg.style.display="block";
+      heroImg.src=""; heroImg.alt="";
+    }else{
+      const currentName = state.roster[remainingIdxs[0]];
+      nextEl.textContent=currentName; posEl.textContent=String(state.index+1); emptyMsg.style.display="none";
+      renderImage(currentName);
     }
 
-    function buildRoster(mode) {
-      if (mode === "ids") {
-        const n = KILLERS_2025_09_05.length;
-        return Array.from({ length: n }, (_, i) => String(i + 1));
-      }
-      return [...KILLERS_2025_09_05];
+    // Chips restantes
+    remainingList.innerHTML = remainingIdxs.map(i=>{
+      const name = state.roster[i];
+      const img = killerImgUrl(state.prefs.imgBase, name);
+      return `<span class="pill"><img src="${img}" alt="" onerror="this.src='';this.style.background='#0c0e12'">${name}</span>`;
+    }).join("");
+
+    // Historial
+    const hist = (state.history.slice(-12).reverse());
+    recentHistory.innerHTML = hist.length ? `<ul>${hist.map(v=>`<li>${v}</li>`).join("")}</ul>`
+                                          : `<p class="muted">Sin historial aún.</p>`;
+
+    // Roster congelado
+    rosterSnapshot.innerHTML = state.roster.map(v=>{
+      const img = killerImgUrl(state.prefs.imgBase, v);
+      return `<span class="pill"><img src="${img}" alt="" onerror="this.src='';this.style.background='#0c0e12'">${v}</span>`;
+    }).join(" ");
+  }
+
+  async function ensureDoc(){
+    const snap = await getDoc(userDocRef);
+    if (!snap.exists()){
+      const roster = buildRoster(state.prefs.mode);
+      const queue = shuffle(Array.from({length:roster.length},(_,i)=>i));
+      await setDoc(userDocRef, {
+        cycle:1, roster, queue, index:0, history:[], total:roster.length,
+        prefs: state.prefs, rosterVersion:"2025-09-05", updatedAt: serverTimestamp()
+      });
     }
+  }
 
-    function visibleOf(roster, idx) {
-      const useNames = state.prefs.useNames || state.prefs.mode === "current";
-      const item = roster[idx];
-      // Si el roster es de IDs, devolver número; si es de nombres, devolver nombre.
-      return (state.prefs.mode === "ids" && !useNames) ? item : item;
-    }
+  function violatesRecentWindow(value){
+    const w = Number(state.prefs.recentWindow||0);
+    if(!w) return false;
+    return state.history.slice(-w).includes(value);
+  }
 
-    function render() {
-      controlsCard.style.display = "block";
-      mainCard.style.display = "block";
-      listCard.style.display = "block";
-      cycleEl.textContent = state.cycle;
-      totalEl.textContent = state.total;
+  async function advance(markPlayed=true){
+    await runTransaction(db, async tx=>{
+      const s = await tx.get(userDocRef); if(!s.exists()) throw new Error("Documento no encontrado");
+      let { cycle, roster, queue, index, history=[], total, prefs } = s.data();
+      const visible = i => roster[i];
 
-      const remainingIdxs = state.queue.slice(state.index);
-      if (remainingIdxs.length === 0) {
-        nextEl.textContent = "—";
-        posEl.textContent = "—";
-        emptyMsg.style.display = "block";
-      } else {
-        nextEl.textContent = visibleOf(state.roster, remainingIdxs[0]);
-        posEl.textContent = String(state.index + 1);
-        emptyMsg.style.display = "none";
-      }
-
-      // Render restante
-      remainingList.innerHTML = remainingIdxs
-        .map(i => `<span class="pill">${visibleOf(state.roster, i)}</span>`)
-        .join(" ");
-
-      // Historial (últimos 12)
-      const hist = state.history.slice(-12).toReversed?.() ?? state.history.slice(-12).reverse();
-      recentHistory.innerHTML = hist.length
-        ? `<ul>${hist.map(v => `<li>${v}</li>`).join("")}</ul>`
-        : `<p class="muted">Sin historial aún.</p>`;
-
-      // Roster congelado
-      rosterSnapshot.innerHTML = state.roster.map((v, i) => `<span class="pill">${v}</span>`).join(" ");
-    }
-
-    async function ensureDoc() {
-      const snap = await getDoc(userDocRef);
-      if (!snap.exists()) {
-        const roster = buildRoster(state.prefs.mode);
-        const queue = shuffle(Array.from({ length: roster.length }, (_, i) => i));
-        await setDoc(userDocRef, {
-          cycle: 1,
-          roster,                  // snapshot del roster al iniciar ciclo
-          queue,                   // cola de índices
-          index: 0,
-          history: [],
-          total: roster.length,
-          prefs: state.prefs,
-          rosterVersion: "2025-09-05",
-          updatedAt: serverTimestamp()
-        });
-      }
-    }
-
-    function violatesRecentWindow(value) {
-      const w = Number(state.prefs.recentWindow || 0);
-      if (!w) return false;
-      const tail = state.history.slice(-w);
-      return tail.includes(value);
-    }
-
-    async function advance(markPlayed = true) {
-      await runTransaction(db, async (tx) => {
-        const s = await tx.get(userDocRef);
-        if (!s.exists()) throw new Error("Documento no encontrado");
-        let { cycle, roster, queue, index, history = [], total, prefs } = s.data();
-
-        // Si el usuario cambió prefs de modo, respetamos el roster congelado actual hasta el próximo reset.
-        const visible = (i) => roster[i];
-
-        if (queue.length === 0 || index >= queue.length) {
-          // Lista agotada → crear nueva con snapshot actualizado del roster actual (según prefs vigentes)
+      if(queue.length===0 || index>=queue.length){
+        roster = buildRoster(prefs.mode);
+        queue = shuffle(Array.from({length:roster.length},(_,i)=>i));
+        index = 0; total = roster.length; cycle = (cycle||1)+1;
+      } else if (markPlayed){
+        const currentIdx = queue[index]; const currentVal = visible(currentIdx);
+        history.push(currentVal); index += 1;
+        if (index>=queue.length){
           roster = buildRoster(prefs.mode);
-          queue  = shuffle(Array.from({ length: roster.length }, (_, i) => i));
-          index  = 0;
-          total  = roster.length;
-          cycle  = (cycle || 1) + 1;
-        } else if (markPlayed) {
-          const currentIdx = queue[index];
-          const currentVal = visible(currentIdx);
-          history.push(currentVal);
-          index += 1;
-          if (index >= queue.length) {
-            roster = buildRoster(prefs.mode);
-            queue  = shuffle(Array.from({ length: roster.length }, (_, i) => i));
-            index  = 0;
-            total  = roster.length;
-            cycle  = (cycle || 1) + 1;
-          }
-        } else {
-          // Saltar: mover elemento actual al final, con protección de "recientes" si aplica
-          if (index < queue.length - 1) {
-            let rotated = queue.slice(index);
-            const head = rotated.shift(); // actual fuera
-            // Si viola ventana de recientes, intenta buscar otro candidato que no viole y traelo al frente
-            let candidatePos = -1;
-            for (let k = 0; k < rotated.length; k++) {
-              const cand = visible(rotated[k]);
-              if (!violatesRecentWindow(cand)) { candidatePos = k; break; }
-            }
-            if (candidatePos > -1) {
-              const [candIdx] = rotated.splice(candidatePos, 1);
-              rotated.unshift(candIdx);
-            }
-            rotated.push(head);
-            queue = queue.slice(0, index).concat(rotated);
-          }
+          queue = shuffle(Array.from({length:roster.length},(_,i)=>i));
+          index=0; total=roster.length; cycle=(cycle||1)+1;
         }
-
-        tx.update(userDocRef, {
-          cycle, roster, queue, index, history, total,
-          updatedAt: serverTimestamp()
-        });
-      });
-    }
-
-    async function resetCycle(forceModeChange = false) {
-      await runTransaction(db, async (tx) => {
-        const s = await tx.get(userDocRef);
-        if (!s.exists()) throw new Error("Documento no encontrado");
-        let { cycle, prefs } = s.data();
-        if (forceModeChange) prefs = state.prefs;
-
-        const roster = buildRoster(prefs.mode);
-        const queue = shuffle(Array.from({ length: roster.length }, (_, i) => i));
-        tx.update(userDocRef, {
-          cycle: (cycle || 1) + 1,
-          roster, queue, index: 0,
-          total: roster.length,
-          prefs,
-          rosterVersion: "2025-09-05",
-          updatedAt: serverTimestamp()
-        });
-      });
-    }
-
-    // Exportar / Importar
-    exportBtn.addEventListener("click", async () => {
-      const snap = await getDoc(userDocRef);
-      const data = snap.data();
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = "dbd_queue_state.json";
-      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-    });
-    importBtn.addEventListener("click", () => importFile.click());
-    importFile.addEventListener("change", async (e) => {
-      const file = e.target.files?.[0]; if (!file) return;
-      const text = await file.text();
-      try {
-        const data = JSON.parse(text);
-        await setDoc(userDocRef, { ...data, updatedAt: serverTimestamp() }, { merge: false });
-      } catch (err) {
-        alert("Archivo inválido: " + err.message);
-      }
-    });
-
-    // Preferencias UI
-    useNamesChk.addEventListener("change", async () => {
-      state.prefs.useNames = useNamesChk.checked;
-      await updateDoc(userDocRef, { prefs: state.prefs, updatedAt: serverTimestamp() });
-      render();
-    });
-    rosterMode.addEventListener("change", async () => {
-      state.prefs.mode = rosterMode.value;
-      await updateDoc(userDocRef, { prefs: state.prefs, updatedAt: serverTimestamp() });
-      await resetCycle(true);
-    });
-    recentWindowSel.addEventListener("change", async () => {
-      state.prefs.recentWindow = Number(recentWindowSel.value);
-      await updateDoc(userDocRef, { prefs: state.prefs, updatedAt: serverTimestamp() });
-    });
-
-    // Botones principales
-    $("markPlayedBtn").addEventListener("click", () => advance(true));
-    $("skipBtn").addEventListener("click", () => advance(false));
-    $("resetCycleBtn").addEventListener("click", () => resetCycle());
-
-    // Auth + Sync
-    let unsub = null;
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        state.uid = user.uid;
-        authStatus.textContent = `Autenticado (anónimo). UID: ${user.uid}`;
-        userDocRef = doc(db, "users", user.uid, "dbdQueue", "current");
-        await ensureDoc();
-        if (unsub) unsub();
-        unsub = onSnapshot(userDocRef, (snap) => {
-          if (snap.exists()) {
-            const data = snap.data();
-            state.cycle = data.cycle || 1;
-            state.queue = data.queue || [];
-            state.index = data.index || 0;
-            state.history = data.history || [];
-            state.roster = data.roster || buildRoster(state.prefs.mode);
-            state.total = data.total || state.roster.length;
-            state.prefs = data.prefs || state.prefs;
-            // UI controles
-            useNamesChk.checked = !!state.prefs.useNames;
-            rosterMode.value = state.prefs.mode || "current";
-            recentWindowSel.value = String(state.prefs.recentWindow ?? 5);
-            render();
-            syncStatus.textContent = "Sincronizado.";
-          } else {
-            syncStatus.textContent = "Documento no encontrado.";
-          }
-        }, (err) => syncStatus.textContent = `Error de sincronización: ${err.message}`);
-        controlsCard.style.display = "block";
-        mainCard.style.display = "block";
-        listCard.style.display = "block";
       } else {
-        authStatus.textContent = "No autenticado.";
+        if(index < queue.length-1){
+          let rotated = queue.slice(index);
+          const head = rotated.shift();
+          let pos=-1;
+          for(let k=0;k<rotated.length;k++){ const cand=visible(rotated[k]); if(!violatesRecentWindow(cand)){pos=k;break;} }
+          if(pos>-1){ const [x]=rotated.splice(pos,1); rotated.unshift(x); }
+          rotated.push(head);
+          queue = queue.slice(0,index).concat(rotated);
+        }
       }
+      tx.update(userDocRef,{cycle, roster, queue, index, history, total, updatedAt: serverTimestamp()});
     });
+  }
 
-    signInAnonymously(getAuth()).catch((err) => {
-      authStatus.textContent = `Error de autenticación: ${err.message}`;
+  async function resetCycle(forceModeChange=false){
+    await runTransaction(db, async tx=>{
+      const s = await tx.get(userDocRef); if(!s.exists()) throw new Error("Documento no encontrado");
+      let { cycle, prefs } = s.data(); if(forceModeChange) prefs = state.prefs;
+      const roster = buildRoster(prefs.mode);
+      const queue = shuffle(Array.from({length:roster.length},(_,i)=>i));
+      tx.update(userDocRef,{cycle:(cycle||1)+1, roster, queue, index:0, total:roster.length, prefs, rosterVersion:"2025-09-05", updatedAt: serverTimestamp()});
     });
-  </script>
+  }
 
-  <footer class="muted" style="margin-top:16px;">
-    Fuentes de la lista de killers (wiki oficial y páginas de capítulos/licencias recientes):
-    <br>— Página general de Killers (wiki.gg). — Vecna / The Lich. — Castlevania / The Dark Lord.
-    — The Animatronic (FNaF). — The Houndmaster. — Ken Kaneki / The Ghoul.
-  </footer>
+  // Exportar/Importar
+  exportBtn.addEventListener("click", async ()=>{
+    const snap = await getDoc(userDocRef); const data = snap.data();
+    const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const url = URL.createObjectURL(blob); const a=document.createElement("a");
+    a.href=url; a.download="dbd_queue_state.json"; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  });
+  importBtn.addEventListener("click",()=>importFile.click());
+  importFile.addEventListener("change", async e=>{
+    const file=e.target.files?.[0]; if(!file) return;
+    const text=await file.text();
+    try{ const data=JSON.parse(text); await setDoc(userDocRef,{...data,updatedAt:serverTimestamp()},{merge:false}); }
+    catch(err){ alert("Archivo inválido: "+err.message); }
+  });
+
+  // Preferencias
+  useNamesChk.addEventListener("change", async ()=>{
+    state.prefs.useNames = useNamesChk.checked;
+    await updateDoc(userDocRef,{prefs:state.prefs,updatedAt:serverTimestamp()}); render();
+  });
+  rosterMode.addEventListener("change", async ()=>{
+    state.prefs.mode = rosterMode.value;
+    await updateDoc(userDocRef,{prefs:state.prefs,updatedAt:serverTimestamp()});
+    await resetCycle(true);
+  });
+  recentWindowSel.addEventListener("change", async ()=>{
+    state.prefs.recentWindow = Number(recentWindowSel.value);
+    await updateDoc(userDocRef,{prefs:state.prefs,updatedAt:serverTimestamp()});
+  });
+  imgBaseInput.addEventListener("change", async ()=>{
+    state.prefs.imgBase = imgBaseInput.value.trim();
+    await updateDoc(userDocRef,{prefs:state.prefs,updatedAt:serverTimestamp()});
+    render();
+  });
+
+  // Botones y atajos
+  $("markPlayedBtn").addEventListener("click",()=>advance(true));
+  $("skipBtn").addEventListener("click",()=>advance(false));
+  $("resetCycleBtn").addEventListener("click",()=>resetCycle());
+  window.addEventListener("keydown",e=>{
+    if(e.target.tagName==="INPUT"||e.target.tagName==="SELECT") return;
+    if(e.key.toLowerCase()==="j") advance(true);
+    if(e.key.toLowerCase()==="k") advance(false);
+    if(e.key.toLowerCase()==="r") resetCycle();
+  });
+
+  // Auth + Sync
+  let unsub=null;
+  onAuthStateChanged(auth, async (user)=>{
+    if(user){
+      state.uid=user.uid;
+      authStatus.textContent=`Autenticado (anónimo). UID: ${user.uid}`;
+      userDocRef = doc(db,"users",user.uid,"dbdQueue","current");
+      // Prefs iniciales: tomar imgBase actual
+      state.prefs.imgBase = imgBaseInput.value;
+      await ensureDoc();
+      if(unsub) unsub();
+      unsub = onSnapshot(userDocRef,(snap)=>{
+        if(snap.exists()){
+          const data=snap.data();
+          state.cycle=data.cycle||1; state.queue=data.queue||[]; state.index=data.index||0;
+          state.history=data.history||[]; state.roster=data.roster||buildRoster(state.prefs.mode);
+          state.total=data.total||state.roster.length; state.prefs=data.prefs||state.prefs;
+          // UI
+          useNamesChk.checked=!!state.prefs.useNames;
+          rosterMode.value=state.prefs.mode||"current";
+          recentWindowSel.value=String(state.prefs.recentWindow??5);
+          imgBaseInput.value=state.prefs.imgBase || imgBaseInput.value;
+          render(); syncStatus.textContent="Sincronizado.";
+        } else {
+          syncStatus.textContent="Documento no encontrado.";
+        }
+      },err=>syncStatus.textContent=`Error de sincronización: ${err.message}`);
+      controlsCard.style.display="block"; mainCard.style.display="block"; listCard.style.display="block";
+    } else { authStatus.textContent="No autenticado."; }
+  });
+
+  // Usa la MISMA instancia 'auth'
+  signInAnonymously(auth).catch(err=>{
+    authStatus.textContent = `Error de autenticación: ${err.code} — ${err.message}`;
+    console.error(err);
+  });
+</script>
 </body>
 </html>
