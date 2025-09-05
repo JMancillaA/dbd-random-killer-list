@@ -73,23 +73,6 @@
   </div>
 
   <div class="card" id="controlsCard" style="display:none;">
-    <div class="grid">
-      <div class="formline">
-        <label><input type="checkbox" id="useNamesChk" checked> Usar nombres oficiales</label>
-        <label>Evitar repetidos recientes:
-          <select id="recentWindow">
-            <option value="0">Off</option><option value="3">3</option>
-            <option value="5" selected>5</option><option value="8">8</option><option value="10">10</option>
-          </select>
-        </label>
-        <label>Modo lista:
-          <select id="rosterMode">
-            <option value="current" selected>Roster actual (nombres)</option>
-            <option value="ids">IDs 1–N</option>
-          </select>
-        </label>
-      </div>
-    </div>
     <p class="muted" style="margin-top:8px">
       Atajos: <span class="kbd">J</span> Marcar jugado · <span class="kbd">K</span> Saltar · <span class="kbd">R</span> Reiniciar ciclo
     </p>
@@ -125,10 +108,6 @@
     <details style="margin-top:8px;">
       <summary><strong>Historial reciente (últimos 12)</strong></summary>
       <div id="recentHistory"></div>
-    </details>
-    <details style="margin-top:8px;">
-      <summary><strong>Roster usado (congelado al crear el ciclo)</strong></summary>
-      <div id="rosterSnapshot"></div>
     </details>
   </div>
 </div>
