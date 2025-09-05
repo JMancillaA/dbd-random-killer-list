@@ -206,7 +206,6 @@
         heroImg=$("heroImg"), cycleEl=$("cycle"), nextEl=$("nextItem"),
         posEl=$("position"), totalEl=$("total"), emptyMsg=$("emptyMsg"),
         remainingList=$("remainingList"), recentHistory=$("recentHistory"),
-        rosterSnapshot=$("rosterSnapshot"),
         markPlayedBtn=$("markPlayedBtn"), skipBtn=$("skipBtn"), resetCycleBtn=$("resetCycleBtn"),
         exportBtn=$("exportBtn"), importBtn=$("importBtn"), importFile=$("importFile"),
         useNamesChk=$("useNamesChk"), rosterMode=$("rosterMode"), recentWindowSel=$("recentWindow");
@@ -254,12 +253,6 @@
     const hist = (state.history.slice(-12).reverse());
     recentHistory.innerHTML = hist.length ? `<ul>${hist.map(v=>`<li>${v}</li>`).join("")}</ul>`
                                           : `<p class="muted">Sin historial aún.</p>`;
-
-    // Roster congelado
-    rosterSnapshot.innerHTML = state.roster.map(v=>{
-      const img = killerImgUrl(state.prefs.imgBase, v);
-      return `<span class="pill"><img src="${img}" alt="" onerror="this.src='';this.style.background='#0c0e12'">${v}</span>`;
-    }).join(" ");
   }
 
   async function ensureDoc(){
@@ -382,10 +375,10 @@
           state.cycle=data.cycle||1; state.queue=data.queue||[]; state.index=data.index||0;
           state.history=data.history||[]; state.roster=data.roster||buildRoster(state.prefs.mode);
           state.total=data.total||state.roster.length; state.prefs=data.prefs||state.prefs;
-          // UI
-          useNamesChk.checked=!!state.prefs.useNames;
-          rosterMode.value=state.prefs.mode||"current";
-          recentWindowSel.value=String(state.prefs.recentWindow??5);
+          // UI: reflejar valores por defecto en los controles
+          useNamesChk.checked=state.prefs.useNames ?? true;
+          rosterMode.value=state.prefs.mode ?? "current";
+          recentWindowSel.value=String(state.prefs.recentWindow ?? 5);
           render(); syncStatus.textContent="Sincronizado.";
         } else {
           syncStatus.textContent="Documento no encontrado.";
@@ -396,6 +389,13 @@
   });
 
   // Usa la MISMA instancia 'auth'
+  signInAnonymously(auth).catch(err=>{
+    authStatus.textContent = `Error de autenticación: ${err.code} — ${err.message}`;
+    console.error(err);
+  });
+</script>
+</body>
+</html>
   signInAnonymously(auth).catch(err=>{
     authStatus.textContent = `Error de autenticación: ${err.code} — ${err.message}`;
     console.error(err);
