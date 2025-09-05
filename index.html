@@ -191,8 +191,8 @@
       .replace(/[^a-z0-9_]+/g,"");  // quitar caracteres no permitidos
   }
   function killerImgUrl(base, name){
-    // Si name es undefined/null, retorna un placeholder directamente
-    if (!name) return "";
+    // Si name es undefined/null, retorna string vacío (no intenta cargar imagen)
+    if (!name || typeof name !== "string" || name === "undefined") return "";
     return `${base}${slugifyKiller(name)}.png`;
   }
 
@@ -258,7 +258,8 @@
     remainingList.innerHTML = remainingIdxs.map(i=>{
       const name = state.roster && typeof i === "number" ? state.roster[i] : null;
       const img = killerImgUrl(state.prefs.imgBase, name);
-      return `<span class="pill"><img src="${img}" alt="" onerror="this.src='';this.style.background='#0c0e12'">${name||"—"}</span>`;
+      // Si img es vacío, no se pone src (no se carga imagen undefined)
+      return `<span class="pill"><img${img ? ` src="${img}"` : ""} alt="" onerror="this.src='';this.style.background='#0c0e12'">${name||"—"}</span>`;
     }).join("");
 
     // Historial
