@@ -47,6 +47,10 @@
     .hero .art img{width:100%;height:100%;object-fit:cover;display:block}
     .hero .meta small{color:var(--muted)}
     .hero .title{font-size:1.6rem;font-weight:700;margin:2px 0 8px}
+
+    /* Ocultar la línea que contiene el ciclo sin tocar el HTML */
+    .hero .meta .muted:has(#cycle){ display:none !important; }
+
     /* Chips con mini retrato */
     .pill{
       display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--chip-border);
@@ -83,6 +87,7 @@
       <div class="art"><img id="heroImg" alt="Retrato" loading="eager"></div>
       <div class="meta">
         <div class="title"><span id="nextItem">–</span></div>
+        <div class="muted">Ciclo <span id="cycle">–</span></div>
         <div class="muted">Posición <span id="position">–</span> de <span id="total">–</span></div>
         <div class="row" style="margin-top:10px">
           <button id="markPlayedBtn" class="btn-ok">Marcar como jugado</button>
@@ -140,7 +145,6 @@
   ];
 
   // ===== SLUGIFY PARA IMÁGENES =====
-  // mapas y excepciones corregidas (claves tal cual aparecen en el roster)
   const SPECIAL_SLUGS = {
     "The Ghost Face": "ghostface",
     "The Demogorgon": "demogorgon",
@@ -170,7 +174,6 @@
     "The Deathslinger": "deathslinger",
     "The Cenobite": "pinhead"
   };
-  // versión normalizada para búsquedas robustas (lowercase + trim)
   const SPECIAL_SLUGS_NORM = {};
   Object.keys(SPECIAL_SLUGS).forEach(k => { SPECIAL_SLUGS_NORM[k.toLowerCase().trim()] = SPECIAL_SLUGS[k]; });
 
@@ -178,25 +181,22 @@
     if(!name) return "";
     const key = String(name).toLowerCase().trim();
     if (SPECIAL_SLUGS_NORM[key]) return SPECIAL_SLUGS_NORM[key];
-    // si el nombre viene con %20 u otros encodings, intentar decodificar primero
     let decoded = String(name);
     try { decoded = decodeURIComponent(decoded); } catch(e){}
     return decoded
       .replace(/^the\s+/i,"")
       .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
       .toLowerCase().trim()
-      .replace(/\s+/g,"_")           // espacios => _
-      .replace(/%20/g,"_")          // por si quedan %20 literales
-      .replace(/[^a-z0-9_]+/g,"");  // quitar caracteres no permitidos
+      .replace(/\s+/g,"_")
+      .replace(/%20/g,"_")
+      .replace(/[^a-z0-9_]+/g,"");
   }
   function killerImgUrl(base, name){
-    // Si name es undefined/null, retorna string vacío (no intenta cargar imagen)
     if (!name || typeof name !== "string" || name === "undefined") return "";
     return `${base}${slugifyKiller(name)}.png`;
   }
 
   function renderImage(name){
-    // Si name es undefined/null, muestra placeholder y sale
     if (!name) {
       heroImg.src = "";
       heroImg.alt = "";
@@ -204,8 +204,11 @@
     }
     const url = killerImgUrl(state.prefs.imgBase, name);
     heroImg.src = url;
-    heroImg.onerror = () => { heroImg.onerror=null; heroImg.src = `data:image/svg+xml,` +
-      encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><rect width='100%' height='100%' fill='%230c0e12'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%237d869c' font-family='sans-serif' font-size='18'>${name||"?"}</text></svg>`);}
+    heroImg.onerror = () => {
+      heroImg.onerror=null;
+      heroImg.src = `data:image/svg+xml,` +
+        encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><rect width='100%' height='100%' fill='%230c0e12'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%237d869c' font-family='sans-serif' font-size='18'>${name||"?"}</text></svg>`);
+    };
   }
 
   // ===== APP STATE =====
@@ -214,7 +217,6 @@
   const db = getFirestore(app);
   enableIndexedDbPersistence(db).catch(()=>{});
   const DEFAULT_IMG_BASE = "https://otz-addon-tierlist.pages.dev/public/killers/";
-
 
   const $ = id => document.getElementById(id);
   const authStatus=$("authStatus"), syncStatus=$("syncStatus"),
@@ -239,7 +241,8 @@
 
   function render(){
     controlsCard.style.display="block"; mainCard.style.display="block"; listCard.style.display="block";
-    cycleEl.textContent=state.cycle; totalEl.textContent=state.total;
+    if (cycleEl) cycleEl.textContent = String(state.cycle);
+    totalEl.textContent=state.total;
     const remainingIdxs = state.queue.slice(state.index);
 
     if (remainingIdxs.length===0){
@@ -257,7 +260,6 @@
     remainingList.innerHTML = remainingIdxs.map(i=>{
       const name = state.roster && typeof i === "number" ? state.roster[i] : null;
       const img = killerImgUrl(state.prefs.imgBase, name);
-      // Si img es vacío, no se pone src (no se carga imagen undefined)
       return `<span class="pill"><img${img ? ` src="${img}"` : ""} alt="" onerror="this.src='';this.style.background='#0c0e12'">${name||"—"}</span>`;
     }).join("");
 
@@ -383,7 +385,6 @@
       state.uid=user.uid;
       authStatus.textContent=`Autenticado (anónimo). UID: ${user.uid}`;
       userDocRef = doc(db,"users",user.uid,"dbdQueue","current");
-      // Prefs iniciales: tomar imgBase actual
       state.prefs.imgBase = DEFAULT_IMG_BASE;
       await ensureDoc();
       if(unsub) unsub();
@@ -393,7 +394,6 @@
           state.cycle=data.cycle||1; state.queue=data.queue||[]; state.index=data.index||0;
           state.history=data.history||[]; state.roster=data.roster||buildRoster(state.prefs.mode);
           state.total=data.total||state.roster.length; state.prefs=data.prefs||state.prefs;
-          // UI: reflejar valores por defecto en los controles
           if (useNamesChk) useNamesChk.checked=state.prefs.useNames ?? true;
           if (rosterMode) rosterMode.value=state.prefs.mode ?? "current";
           if (recentWindowSel) recentWindowSel.value=String(state.prefs.recentWindow ?? 5);
@@ -406,7 +406,6 @@
     } else { authStatus.textContent="No autenticado."; }
   });
 
-  // Usa la MISMA instancia 'auth'
   signInAnonymously(auth).catch(err=>{
     authStatus.textContent = `Error de autenticación: ${err.code} — ${err.message}`;
     console.error(err);
