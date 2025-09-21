@@ -74,6 +74,7 @@
   <div class="card">
     <div id="authStatus" class="muted">Conectando…</div>
     <div id="syncStatus" class="muted"></div>
+    <button id="googleLoginBtn" style="margin-top:10px">Iniciar sesión con Google</button>
   </div>
 
   <div class="card" id="controlsCard" style="display:none;">
@@ -119,7 +120,7 @@
 <!-- Firebase + App -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import { getFirestore, enableIndexedDbPersistence, doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   // ===== CONFIG FIREBASE =====
@@ -226,7 +227,8 @@
         remainingList=$("remainingList"), recentHistory=$("recentHistory"),
         markPlayedBtn=$("markPlayedBtn"), skipBtn=$("skipBtn"), resetCycleBtn=$("resetCycleBtn"),
         exportBtn=$("exportBtn"), importBtn=$("importBtn"), importFile=$("importFile"),
-        useNamesChk=$("useNamesChk"), rosterMode=$("rosterMode"), recentWindowSel=$("recentWindow");
+        useNamesChk=$("useNamesChk"), rosterMode=$("rosterMode"), recentWindowSel=$("recentWindow"),
+        googleLoginBtn = document.getElementById("googleLoginBtn");
 
   let userDocRef=null;
   const state = {
@@ -383,7 +385,9 @@
   onAuthStateChanged(auth, async (user)=>{
     if(user){
       state.uid=user.uid;
-      authStatus.textContent=`Autenticado (anónimo). UID: ${user.uid}`;
+      authStatus.textContent = user.isAnonymous
+        ? `Autenticado (anónimo). UID: ${user.uid}`
+        : `Autenticado con Google. UID: ${user.uid} (${user.email || ''})`;
       userDocRef = doc(db,"users",user.uid,"dbdQueue","current");
       state.prefs.imgBase = DEFAULT_IMG_BASE;
       await ensureDoc();
@@ -410,6 +414,17 @@
     authStatus.textContent = `Error de autenticación: ${err.code} — ${err.message}`;
     console.error(err);
   });
+
+  if (googleLoginBtn) {
+    googleLoginBtn.addEventListener("click", async () => {
+      const provider = new GoogleAuthProvider();
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (err) {
+        alert("Error al iniciar sesión con Google: " + err.message);
+      }
+    });
+  }
 </script>
 </body>
 </html>
