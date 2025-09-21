@@ -142,7 +142,8 @@
     "The Blight","The Twins","The Trickster","The Nemesis","The Cenobite",
     "The Artist","The Onryō","The Dredge","The Mastermind","The Knight",
     "The Skull Merchant","The Singularity","The Xenomorph","The Good Guy","The Unknown",
-    "The Lich","The Dark Lord","The Animatronic","The Ghoul","The Houndmaster"
+    "The Lich","The Dark Lord","The Animatronic","The Ghoul","The Houndmaster",
+    "The Krasue"
   ];
 
   // ===== SLUGIFY PARA IMÁGENES =====
@@ -173,7 +174,8 @@
     "The Ghoul": "ghoul",
     "The Houndmaster": "houndmaster",
     "The Deathslinger": "deathslinger",
-    "The Cenobite": "pinhead"
+    "The Cenobite": "pinhead",
+    "The Krasue": "krasue"
   };
   const SPECIAL_SLUGS_NORM = {};
   Object.keys(SPECIAL_SLUGS).forEach(k => { SPECIAL_SLUGS_NORM[k.toLowerCase().trim()] = SPECIAL_SLUGS[k]; });
@@ -194,6 +196,9 @@
   }
   function killerImgUrl(base, name){
     if (!name || typeof name !== "string" || name === "undefined") return "";
+    if (name === "The Krasue") {
+      return "https://deadbydaylight.wiki.gg/images/K41_TheKrasue_Portrait.png?3513ba";
+    }
     return `${base}${slugifyKiller(name)}.png`;
   }
 
