@@ -120,7 +120,7 @@
 <!-- Firebase + App -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, browserLocalPersistence, setPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import { getFirestore, enableIndexedDbPersistence, doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   // ===== CONFIG FIREBASE =====
@@ -236,6 +236,8 @@
         googleLoginBtn = document.getElementById("googleLoginBtn");
 
   let userDocRef=null;
+  let isGoogleUser = false; // <--- NUEVO
+
   const state = {
     uid:null, cycle:1, queue:[], index:0, history:[],
     roster:[], total:0,
@@ -389,7 +391,7 @@
   let unsub=null;
   onAuthStateChanged(auth, async (user)=>{
     if(user){
-      state.uid=user.uid;
+      isGoogleUser = !user.isAnonymous;
       authStatus.textContent = user.isAnonymous
         ? `Autenticado (anónimo). UID: ${user.uid}`
         : `Autenticado con Google. UID: ${user.uid} (${user.email || ''})`;
@@ -412,8 +414,21 @@
         }
       },err=>syncStatus.textContent=`Error de sincronización: ${err.message}`);
       controlsCard.style.display="block"; mainCard.style.display="block"; listCard.style.display="block";
-    } else { authStatus.textContent="No autenticado."; }
+      // Cambia el botón a "Cerrar sesión" si es Google
+      if (googleLoginBtn) {
+        googleLoginBtn.textContent = isGoogleUser ? "Cerrar sesión" : "Iniciar sesión con Google";
+      }
+    } else {
+      isGoogleUser = false;
+      authStatus.textContent="No autenticado.";
+      if (googleLoginBtn) {
+        googleLoginBtn.textContent = "Iniciar sesión con Google";
+      }
+    }
   });
+
+  // Antes de cualquier signIn, fuerza persistencia local para mantener sesión Google
+  setPersistence(auth, browserLocalPersistence).catch(console.error);
 
   signInAnonymously(auth).catch(err=>{
     authStatus.textContent = `Error de autenticación: ${err.code} — ${err.message}`;
@@ -422,11 +437,16 @@
 
   if (googleLoginBtn) {
     googleLoginBtn.addEventListener("click", async () => {
-      const provider = new GoogleAuthProvider();
-      try {
-        await signInWithPopup(auth, provider);
-      } catch (err) {
-        alert("Error al iniciar sesión con Google: " + err.message);
+      if (isGoogleUser) {
+        // Si ya está logueado con Google, cerrar sesión
+        await auth.signOut();
+      } else {
+        const provider = new GoogleAuthProvider();
+        try {
+          await signInWithPopup(auth, provider);
+        } catch (err) {
+          alert("Error al iniciar sesión con Google: " + err.message);
+        }
       }
     });
   }
