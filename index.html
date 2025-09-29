@@ -69,7 +69,7 @@
 <body>
 <div class="wrap">
   <h1>DBD Killer Randomizer</h1>
-  <p class="muted">Orden aleatorio sin repetidos hasta completar el ciclo. Persistencia en Firebase.</p>
+  <p class="muted">Orden aleatorio de asesinos de dead by daylight sin repetidos hasta completar el ciclo.</p>
 
   <div class="card">
     <div id="authStatus" class="muted">Conectando…</div>
@@ -287,6 +287,24 @@
         cycle:1, roster, queue, index:0, history:[], total:roster.length,
         prefs: state.prefs, rosterVersion:"2025-09-05", updatedAt: serverTimestamp()
       });
+    } else {
+      // Si el roster guardado es más corto que el actual, actualizarlo (por ejemplo, si hay un nuevo killer)
+      const data = snap.data();
+      const currentRoster = buildRoster(state.prefs.mode);
+      if (
+        Array.isArray(data.roster) &&
+        data.roster.length !== currentRoster.length
+      ) {
+        const queue = shuffle(Array.from({length:currentRoster.length},(_,i)=>i));
+        await setDoc(userDocRef, {
+          ...data,
+          roster: currentRoster,
+          queue,
+          index: 0,
+          total: currentRoster.length,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      }
     }
   }
 
@@ -393,8 +411,8 @@
     if(user){
       isGoogleUser = !user.isAnonymous;
       authStatus.textContent = user.isAnonymous
-        ? `Autenticado (anónimo). UID: ${user.uid}`
-        : `Autenticado con Google. UID: ${user.uid} (${user.email || ''})`;
+        ? `Autenticado (anónimo)`
+        : `Autenticado con Google${user.email ? " ("+user.email+")" : ""}`;
       userDocRef = doc(db,"users",user.uid,"dbdQueue","current");
       state.prefs.imgBase = DEFAULT_IMG_BASE;
       await ensureDoc();
