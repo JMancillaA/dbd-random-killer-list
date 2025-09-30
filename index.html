@@ -120,7 +120,7 @@
 <!-- Firebase + App -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, browserLocalPersistence, setPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, browserLocalPersistence, setPersistence, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import { getFirestore, enableIndexedDbPersistence, doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   // ===== CONFIG FIREBASE =====
@@ -442,6 +442,10 @@
         googleLoginBtn.textContent = isGoogleUser ? "Cerrar sesión" : "Iniciar sesión con Google";
       }
     } else {
+      signInAnonymously(auth).catch(err=>{
+        authStatus.textContent = `Error de autenticación: ${err.code} — ${err.message}`;
+        console.error(err);
+      });
       isGoogleUser = false;
       authStatus.textContent="No autenticado.";
       if (googleLoginBtn) {
@@ -450,13 +454,7 @@
     }
   });
 
-  // Antes de cualquier signIn, fuerza persistencia local para mantener sesión Google
   setPersistence(auth, browserLocalPersistence).catch(console.error);
-
-  signInAnonymously(auth).catch(err=>{
-    authStatus.textContent = `Error de autenticación: ${err.code} — ${err.message}`;
-    console.error(err);
-  });
 
   if (googleLoginBtn) {
     googleLoginBtn.addEventListener("click", async () => {
