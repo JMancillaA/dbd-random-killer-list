@@ -288,20 +288,25 @@
         prefs: state.prefs, rosterVersion:"2025-09-05", updatedAt: serverTimestamp()
       });
     } else {
-      // Si el roster guardado es más corto que el actual, actualizarlo (por ejemplo, si hay un nuevo killer)
+      // Si el roster guardado es más corto que el actual, añadir nuevos killers al final sin reiniciar el ciclo
       const data = snap.data();
       const currentRoster = buildRoster(state.prefs.mode);
-      if (
-        Array.isArray(data.roster) &&
-        data.roster.length !== currentRoster.length
-      ) {
-        const queue = shuffle(Array.from({length:currentRoster.length},(_,i)=>i));
+      if (Array.isArray(data.roster) && data.roster.length < currentRoster.length) {
+        // Encontrar los nuevos asesinos
+        const oldRoster = data.roster;
+        const newKillers = currentRoster.filter(k => !oldRoster.includes(k));
+        // Añadir los nuevos asesinos al final del roster y de la cola
+        const updatedRoster = [...oldRoster, ...newKillers];
+        const updatedQueue = [...(data.queue || [])];
+        // Añadir los índices de los nuevos asesinos al final de la cola
+        for (let i = oldRoster.length; i < updatedRoster.length; ++i) {
+          updatedQueue.push(i);
+        }
         await setDoc(userDocRef, {
           ...data,
-          roster: currentRoster,
-          queue,
-          index: 0,
-          total: currentRoster.length,
+          roster: updatedRoster,
+          queue: updatedQueue,
+          total: updatedRoster.length,
           updatedAt: serverTimestamp()
         }, { merge: true });
       }
