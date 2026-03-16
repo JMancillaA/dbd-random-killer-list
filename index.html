@@ -3,111 +3,144 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>DBD Killer Randomizer — API + fallback</title>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3519154404145001" crossorigin="anonymous"></script>
+  <title>DBD Killer Randomizer</title>
   <meta name="color-scheme" content="dark light" />
   <style>
-    :root{
-      --bg:#0e0f12;--card:#16181d;--muted:#8a90a2;--text:#e8ecf3;--accent:#7aa2ff;
-      --border:#20232b;--chip:#1b1f27;--chip-border:#2a2f3a;--ok:#27c3a7;--warn:#ffcc66
+    :root {
+      --bg: #0e0f12; --card: #16181d; --muted: #8a90a2; --text: #e8ecf3; --accent: #7aa2ff;
+      --border: #20232b; --chip: #1b1f27; --chip-border: #2a2f3a; --ok: #27c3a7; --warn: #ffcc66;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;background:radial-gradient(1000px 600px at 20% -10%,#182036,transparent),
-      radial-gradient(900px 500px at 120% 10%,#211a3a,transparent),var(--bg);
-      color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      padding:28px 16px 60px
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1000px 600px at 20% -10%, #182036, transparent),
+                  radial-gradient(900px 500px at 120% 10%, #211a3a, transparent), var(--bg);
+      color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      padding: 28px 16px 60px;
     }
-    .wrap{max-width:1100px;margin:0 auto}
-    h1{margin:0 0 8px}
-    p.muted{color:var(--muted);margin:0 0 12px}
-    .card{
-      background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));
-      border:1px solid var(--border);border-radius:14px;padding:16px;margin:16px 0;
-      box-shadow:0 10px 30px rgba(0,0,0,.25);backdrop-filter:blur(8px)
+    
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-    button{
-      padding:10px 14px;border:1px solid var(--border);border-radius:10px;cursor:pointer;
-      background:#1b1f27;color:var(--text);transition:transform .05s,background .2s,border-color .2s
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.9); }
+      70% { transform: scale(1.03); }
+      100% { opacity: 1; transform: scale(1); }
     }
-    button:hover{background:#212633;border-color:#2b3341}
-    button:active{transform:translateY(1px)}
-    .btn-ok{background:#1f3a35;border-color:#2c5c50}
-    .btn-warn{background:#3a2f1f;border-color:#6a5638}
-    .muted{color:var(--muted)}
-    details summary{cursor:pointer}
-    .hero{display:grid;grid-template-columns:160px 1fr;gap:14px;align-items:center}
-    .hero .art{
-      width:160px;height:160px;border-radius:12px;overflow:hidden;border:1px solid var(--border);
-      background:#0c0e12;display:grid;place-items:center
+    .animate-up { animation: fadeInUp 0.5s ease-out forwards; }
+    .animate-pop { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+    .wrap { max-width: 1100px; margin: 0 auto; }
+    h1 { margin: 0 0 8px; font-weight: 800; letter-spacing: -0.5px; }
+    p.muted { color: var(--muted); margin: 0 0 12px; }
+    
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
+      border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin: 16px 0;
+      box-shadow: 0 12px 40px rgba(0,0,0,.3); backdrop-filter: blur(12px);
+      transition: border-color 0.3s ease;
     }
-    .hero .art img{width:100%;height:100%;object-fit:cover;display:block}
-    .hero .meta small{color:var(--muted)}
-    .hero .title{font-size:1.6rem;font-weight:700;margin:2px 0 8px}
-    .pill{
-      display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--chip-border);
-      border-radius:999px;background:var(--chip);margin:4px 6px 0 0;white-space:nowrap
+    .card:hover { border-color: #2c313d; }
+    
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    
+    button {
+      padding: 10px 16px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer;
+      background: #1b1f27; color: var(--text); font-weight: 500;
+      transition: all 0.2s ease;
     }
-    .pill img{width:22px;height:22px;border-radius:50%;object-fit:cover;flex:0 0 auto;background:#0c0e12}
-    .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#11151c;border:1px solid #2c3544;padding:2px 6px;border-radius:6px}
-    .status-line{margin-top:6px}
-    .tiny{font-size:.92rem}
-    @media (max-width:640px){
-      .hero{grid-template-columns:1fr}
-      .hero .art{width:100%;max-width:220px;height:220px}
+    button:hover { background: #262c38; border-color: #384252; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    button:active { transform: translateY(1px); box-shadow: none; }
+    
+    .btn-ok { background: #1f3a35; border-color: #2c5c50; color: #a3e6d8; }
+    .btn-ok:hover { background: #264a43; border-color: #377364; }
+    .btn-warn { background: #3a2f1f; border-color: #6a5638; color: #ffdca3; }
+    .btn-warn:hover { background: #4a3c28; border-color: #856c46; }
+    
+    .muted { color: var(--muted); }
+    details summary { cursor: pointer; user-select: none; font-weight: 600; margin-bottom: 10px;}
+    
+    .hero { display: grid; grid-template-columns: 180px 1fr; gap: 20px; align-items: center; }
+    .hero .art {
+      width: 180px; height: 180px; border-radius: 16px; overflow: hidden; border: 1px solid var(--border);
+      background: #0c0e12; display: grid; place-items: center; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .hero .art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    
+    .hero .meta small { color: var(--muted); }
+    .hero .title { font-size: 2rem; font-weight: 800; margin: 2px 0 8px; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+    
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border: 1px solid var(--chip-border);
+      border-radius: 999px; background: var(--chip); margin: 4px 6px 0 0; white-space: nowrap; font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+    .pill:hover { background: #252b36; }
+    .pill img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; background: #0c0e12; border: 1px solid #333; }
+    
+    .kbd { font-family: ui-monospace, SFMono-Regular, monospace; background: #11151c; border: 1px solid #2c3544; padding: 2px 8px; border-radius: 6px; font-size: 0.85rem; color: #a1abc0; }
+    .status-line { margin-top: 8px; font-size: 0.9rem; }
+    
+    @media (max-width: 640px) {
+      .hero { grid-template-columns: 1fr; text-align: center; }
+      .hero .art { width: 100%; max-width: 240px; height: 240px; margin: 0 auto; }
+      .row { justify-content: center; }
     }
   </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>DBD Killer Randomizer</h1>
-  <p class="muted">Orden aleatorio de asesinos de Dead by Daylight sin repetidos hasta completar el ciclo.</p>
-
-  <div class="card">
-    <div id="authStatus" class="muted">Conectando…</div>
-    <div id="syncStatus" class="muted status-line"></div>
-    <div id="dataSourceStatus" class="muted status-line tiny"></div>
-    <button id="googleLoginBtn" style="margin-top:10px">Iniciar sesión con Google</button>
+  <div class="animate-up" style="animation-delay: 0s;">
+    <h1>DBD Killer Randomizer</h1>
+    <p class="muted">Orden aleatorio de asesinos sin repetidos hasta completar el ciclo.</p>
   </div>
 
-  <div class="card" id="controlsCard" style="display:none;">
-    <p class="muted" style="margin-top:8px">
-      Atajos: <span class="kbd">J</span> Marcar jugado · <span class="kbd">K</span> Saltar · <span class="kbd">R</span> Reiniciar ciclo
+  <div class="card animate-up" style="animation-delay: 0.1s;">
+    <div id="authStatus" class="muted">Conectando…</div>
+    <div id="syncStatus" class="muted status-line"></div>
+    <button id="googleLoginBtn" style="margin-top:12px">Iniciar sesión con Google</button>
+  </div>
+
+  <div class="card animate-up" id="controlsCard" style="display:none; animation-delay: 0.2s;">
+    <p class="muted" style="margin:0">
+      Atajos: <span class="kbd">J</span> Jugado · <span class="kbd">K</span> Saltar · <span class="kbd">R</span> Reiniciar
     </p>
   </div>
 
-  <div class="card" id="mainCard" style="display:none;">
+  <div class="card animate-up" id="mainCard" style="display:none; animation-delay: 0.3s;">
     <div class="hero">
       <div class="art"><img id="heroImg" alt="Retrato" loading="eager"></div>
       <div class="meta">
         <div class="title"><span id="nextItem">–</span></div>
-        <div class="muted">Ciclo <span id="cycle">–</span></div>
-        <div class="muted">Posición <span id="position">–</span> de <span id="total">–</span></div>
-        <div class="row" style="margin-top:10px">
-          <button id="markPlayedBtn" class="btn-ok">Marcar como jugado</button>
+        <div class="muted">Ciclo <span id="cycle" style="color:var(--text); font-weight:600;">–</span> | Posición <span id="position" style="color:var(--text); font-weight:600;">–</span> de <span id="total">–</span></div>
+        
+        <div class="row" style="margin-top:16px">
+          <button id="markPlayedBtn" class="btn-ok">Marcar Jugado</button>
           <button id="skipBtn">Saltar</button>
-          <button id="resetCycleBtn" class="btn-warn">Reiniciar ciclo</button>
+          <button id="resetCycleBtn" class="btn-warn">Reiniciar Ciclo</button>
           <button id="exportBtn">Exportar</button>
           <input type="file" id="importFile" accept="application/json" style="display:none;">
           <button id="importBtn">Importar</button>
         </div>
-        <p class="muted" id="emptyMsg" style="display:none;margin-top:8px">
-          Lista terminada. Se creó un nuevo ciclo automáticamente.
+        <p class="muted" id="emptyMsg" style="display:none; margin-top:12px; color: var(--ok);">
+          ¡Lista terminada! Se creó un nuevo ciclo automáticamente.
         </p>
       </div>
     </div>
   </div>
 
-  <div class="card" id="listCard" style="display:none;">
+  <div class="card animate-up" id="listCard" style="display:none; animation-delay: 0.4s;">
     <details>
-      <summary><strong>Lista restante</strong></summary>
-      <div id="remainingList"></div>
+      <summary>Lista restante</summary>
+      <div id="remainingList" style="margin-top: 10px;"></div>
     </details>
+    <hr style="border:0; border-top:1px solid var(--border); margin: 16px 0;">
     <details>
-      <summary><strong>Historial reciente (últimos 12)</strong></summary>
-      <div id="recentHistory"></div>
+      <summary>Historial reciente (últimos 12)</summary>
+      <div id="recentHistory" style="margin-top: 10px;"></div>
     </details>
   </div>
 </div>
@@ -127,81 +160,28 @@
     measurementId: "G-724ZR5052C"
   };
 
-  const FALLBACK_KILLERS = [
-    "The Trapper","The Wraith","The Hillbilly","The Nurse","The Shape",
-    "The Hag","The Doctor","The Huntress","The Cannibal","The Nightmare",
-    "The Pig","The Clown","The Spirit","The Legion","The Plague",
-    "The Ghost Face","The Demogorgon","The Oni","The Deathslinger","The Executioner",
-    "The Blight","The Twins","The Trickster","The Nemesis","The Cenobite",
-    "The Artist","The Onryō","The Dredge","The Mastermind","The Knight",
-    "The Skull Merchant","The Singularity","The Xenomorph","The Good Guy","The Unknown",
-    "The Lich","The Dark Lord","The Animatronic","The Ghoul","The Houndmaster",
-    "The Krasue"
-  ];
-
   const SPECIAL_SLUGS = {
-    "The Ghost Face": "ghostface",
-    "The Demogorgon": "demogorgon",
-    "The Onryō": "onryo",
-    "The Shape": "myers",
-    "The Cannibal": "leatherface",
-    "The Nightmare": "freddy",
-    "The Executioner": "pyramid%20head",
-    "The Clown": "clown",
-    "The Spirit": "spirit",
-    "The Legion": "legion",
-    "The Plague": "plague",
-    "The Oni": "oni",
-    "The Dredge": "dredge",
-    "The Mastermind": "wesker",
-    "The Knight": "knight",
-    "The Skull Merchant": "skull%20merchant",
-    "The Singularity": "singularity",
-    "The Xenomorph": "xenomorph",
-    "The Good Guy": "chucky",
-    "The Unknown": "unknown",
-    "The Lich": "vecna",
-    "The Dark Lord": "dracula",
-    "The Animatronic": "springtrap",
-    "The Ghoul": "ghoul",
-    "The Houndmaster": "houndmaster",
-    "The Deathslinger": "deathslinger",
-    "The Cenobite": "pinhead",
-    "The Krasue": "krasue"
+    "The Ghost Face": "ghostface", "The Demogorgon": "demogorgon", "The Onryō": "onryo",
+    "The Shape": "myers", "The Cannibal": "leatherface", "The Nightmare": "freddy",
+    "The Executioner": "pyramid%20head", "The Clown": "clown", "The Spirit": "spirit",
+    "The Legion": "legion", "The Plague": "plague", "The Oni": "oni", "The Dredge": "dredge",
+    "The Mastermind": "wesker", "The Knight": "knight", "The Skull Merchant": "skull%20merchant",
+    "The Singularity": "singularity", "The Xenomorph": "xenomorph", "The Good Guy": "chucky",
+    "The Unknown": "unknown", "The Lich": "vecna", "The Dark Lord": "dracula",
+    "The Animatronic": "springtrap", "The Ghoul": "ghoul", "The Houndmaster": "houndmaster",
+    "The Deathslinger": "deathslinger", "The Cenobite": "pinhead"
   };
 
   const SPECIAL_SLUGS_NORM = {};
-  Object.keys(SPECIAL_SLUGS).forEach(k => {
-    SPECIAL_SLUGS_NORM[k.toLowerCase().trim()] = SPECIAL_SLUGS[k];
-  });
+  Object.keys(SPECIAL_SLUGS).forEach(k => { SPECIAL_SLUGS_NORM[k.toLowerCase().trim()] = SPECIAL_SLUGS[k]; });
 
-  const API_BASE = "https://dbd.tricky.lol/api";
   const DEFAULT_IMG_BASE = "https://otz-addon-tierlist.pages.dev/public/killers/";
-  const LOCAL_CACHE_KEY = "dbd_tricky_catalog_cache_v2";
-  const LOCAL_CACHE_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 7;
 
   const $ = id => document.getElementById(id);
-  const authStatus = $("authStatus");
-  const syncStatus = $("syncStatus");
-  const dataSourceStatus = $("dataSourceStatus");
-  const controlsCard = $("controlsCard");
-  const mainCard = $("mainCard");
-  const listCard = $("listCard");
-  const heroImg = $("heroImg");
-  const cycleEl = $("cycle");
-  const nextEl = $("nextItem");
-  const posEl = $("position");
-  const totalEl = $("total");
-  const emptyMsg = $("emptyMsg");
-  const remainingList = $("remainingList");
-  const recentHistory = $("recentHistory");
-  const markPlayedBtn = $("markPlayedBtn");
-  const skipBtn = $("skipBtn");
-  const resetCycleBtn = $("resetCycleBtn");
-  const exportBtn = $("exportBtn");
-  const importBtn = $("importBtn");
-  const importFile = $("importFile");
-  const googleLoginBtn = $("googleLoginBtn");
+  const authStatus = $("authStatus"), syncStatus = $("syncStatus");
+  const controlsCard = $("controlsCard"), mainCard = $("mainCard"), listCard = $("listCard");
+  const heroImg = $("heroImg"), cycleEl = $("cycle"), nextEl = $("nextItem"), posEl = $("position"), totalEl = $("total");
+  const emptyMsg = $("emptyMsg"), remainingList = $("remainingList"), recentHistory = $("recentHistory");
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
@@ -212,21 +192,10 @@
   let unsub = null;
   let isGoogleUser = false;
   let activeCatalog = [];
-  let activeCatalogSource = "fallback";
 
   const state = {
-    uid: null,
-    cycle: 1,
-    queue: [],
-    historyKeys: [],
-    catalog: [],
-    total: 0,
-    prefs: {
-      mode: "current",
-      recentWindow: 5,
-      imgBase: DEFAULT_IMG_BASE
-    },
-    rosterSource: "fallback"
+    uid: null, cycle: 1, queue: [], historyKeys: [], catalog: [], total: 0,
+    prefs: { mode: "current", recentWindow: 5, imgBase: DEFAULT_IMG_BASE }
   };
 
   function shuffle(a) {
@@ -238,477 +207,91 @@
     return arr;
   }
 
-  function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  function normalizeText(value) {
-    return String(value ?? "")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .trim()
-      .toLowerCase();
-  }
-
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-  }
-
-  function killerKeyFromName(name) {
-    const norm = normalizeText(name)
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-    return norm ? `killer:${norm}` : "";
-  }
-
-  function looksLikeUrl(value) {
-    return typeof value === "string" && /^https?:\/\//i.test(value);
-  }
-
   function slugifyKiller(name) {
     if (!name) return "";
     const key = String(name).toLowerCase().trim();
     if (SPECIAL_SLUGS_NORM[key]) return SPECIAL_SLUGS_NORM[key];
-    let decoded = String(name);
-    try { decoded = decodeURIComponent(decoded); } catch {}
-    return decoded
-      .replace(/^the\s+/i, "")
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase().trim()
-      .replace(/\s+/g, "_")
-      .replace(/%20/g, "_")
-      .replace(/[^a-z0-9_]+/g, "");
+    return String(name).replace(/^the\s+/i, "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/\s+/g, "_").replace(/[^a-z0-9_]+/g, "");
   }
 
   function killerImgUrl(base, name) {
-    if (!name || typeof name !== "string") return "";
-    if (name === "The Krasue") {
-      return "https://deadbydaylight.wiki.gg/images/K41_TheKrasue_Portrait.png?3513ba";
-    }
     return `${base}${slugifyKiller(name)}.png`;
   }
 
-  function sanitizeCatalogEntry(entry) {
-    if (!entry || typeof entry !== "object") return null;
-    const name = typeof entry.name === "string" ? entry.name.trim() : "";
-    if (!name) return null;
-    const key = typeof entry.key === "string" && entry.key.trim() ? entry.key.trim() : killerKeyFromName(name);
-    if (!key) return null;
-    const id = typeof entry.id === "string" && entry.id.trim() ? entry.id.trim() : null;
-    const image = looksLikeUrl(entry.image) ? entry.image.trim() : null;
-    return { key, id, name, image };
-  }
-
-  function fallbackCatalog() {
-    return FALLBACK_KILLERS.map(name => ({
-      key: killerKeyFromName(name),
-      id: null,
-      name,
-      image: null
-    }));
-  }
-
-  function normalizeApiCatalog(payload) {
-    // 1. Intentar encontrar un array directamente
-    const candidateArrays = [
-      payload,
-      payload?.data,
-      payload?.characters,
-      payload?.results,
-      payload?.items
-    ];
-
-    let rawList = candidateArrays.find(Array.isArray);
-
-    // 2. Si no hay un array, intentar extraer los valores si es un Diccionario/Objeto
-    if (!rawList && payload && typeof payload === "object") {
-      // Si los datos están anidados en "data" o en el root
-      const sourceObj = payload.data || payload; 
-      rawList = Object.values(sourceObj).filter(v => v && typeof v === "object");
-    }
-
-    if (!rawList) rawList = [];
-
-    const normalized = rawList.map(item => {
-      if (typeof item === "string") {
-        const name = item.trim();
-        return name ? { key: killerKeyFromName(name), id: null, name, image: null } : null;
-      }
-
-      if (!item || typeof item !== "object") return null;
-
-      // 3. Helper para buscar propiedades ignorando mayúsculas/minúsculas
-      const getProp = (obj, keys) => {
-        const lowerObjKeys = Object.keys(obj).reduce((acc, k) => {
-          acc[k.toLowerCase()] = obj[k];
-          return acc;
-        }, {});
-        const foundKey = keys.find(k => lowerObjKeys[k.toLowerCase()] !== undefined);
-        return foundKey ? lowerObjKeys[foundKey.toLowerCase()] : undefined;
-      };
-
-      const name = getProp(item, [
-        "name", "characterName", "displayName", "alias", "title", "character", "killer"
-      ]);
-
-      if (!name || typeof name !== "string" || !name.trim()) return null;
-
-      const role = getProp(item, ["role", "type", "side"]);
-      if (role && typeof role === "string" && !/killer/i.test(role)) return null;
-
-      const id = getProp(item, ["id", "characterId", "code", "tag", "characterCode"]);
-      const image = getProp(item, ["image", "imageUrl", "portrait", "portraitUrl", "icon", "iconUrl", "thumbnail", "thumbnailUrl"]);
-
-      return {
-        key: killerKeyFromName(name),
-        id: (typeof id === "string" || typeof id === "number") ? String(id).trim() : null,
-        name: name.trim(),
-        image: looksLikeUrl(image) ? image.trim() : null
-      };
-    }).filter(Boolean);
-
-    const dedup = new Map();
-    for (const entry of normalized) {
-      if (!dedup.has(entry.key)) {
-        dedup.set(entry.key, entry);
-      } else {
-        const prev = dedup.get(entry.key);
-        dedup.set(entry.key, {
-          key: prev.key,
-          id: prev.id || entry.id || null,
-          name: prev.name || entry.name,
-          image: prev.image || entry.image || null
-        });
-      }
-    }
-
-    return Array.from(dedup.values());
-  }
-
-  function readCatalogCache() {
-    try {
-      const raw = localStorage.getItem(LOCAL_CACHE_KEY);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      if (!parsed || !Array.isArray(parsed.catalog)) return null;
-      if (typeof parsed.savedAt !== "number") return null;
-      if (Date.now() - parsed.savedAt > LOCAL_CACHE_MAX_AGE_MS) return null;
-      const catalog = parsed.catalog.map(sanitizeCatalogEntry).filter(Boolean);
-      return catalog.length ? catalog : null;
-    } catch {
-      return null;
-    }
-  }
-
-  function writeCatalogCache(catalog) {
-    try {
-      localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify({
-        savedAt: Date.now(),
-        catalog
-      }));
-    } catch {}
-  }
-
-  async function fetchJsonWithTimeout(url, timeoutMs = 15000) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      const res = await fetch(url, {
-        method: "GET",
-        mode: "cors",
-        cache: "no-store",
-        headers: { "Accept": "application/json" },
-        signal: controller.signal
-      });
-
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-
-      return await res.json();
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-
-  async function fetchJsonWithRetry(url, attempts = 3) {
-    let lastErr = null;
-
-    for (let i = 0; i < attempts; i++) {
-      try {
-        return await fetchJsonWithTimeout(url, 15000);
-      } catch (err) {
-        lastErr = err;
-        if (i < attempts - 1) {
-          await sleep(1200 * (i + 1));
-        }
-      }
-    }
-
-    throw lastErr;
-  }
-
   async function loadActiveCatalog() {
-    const cached = readCatalogCache();
-
     try {
-      const payload = await fetchJsonWithRetry(`${API_BASE}/characters?role=killer`, 3);
-      console.log("API payload /characters?role=killer:", payload);
-
-      const catalog = normalizeApiCatalog(payload);
-      console.log("Catalog normalizado:", catalog);
-
-      if (!catalog.length) {
-        throw new Error("La API respondió, pero el catálogo quedó vacío tras normalizar.");
-      }
-
-      writeCatalogCache(catalog);
-      return { catalog, source: "api" };
+      // cache: 'no-store' asegura que siempre descargue la última versión de tu JSON
+      const res = await fetch('./killers.json', { cache: 'no-store' });
+      if (!res.ok) throw new Error("No se pudo leer el archivo JSON local");
+      return await res.json();
     } catch (err) {
-      console.error("Error cargando catálogo desde API:", err);
-
-      if (cached?.length) {
-        return { catalog: cached, source: "cache", error: err };
-      }
-
-      return { catalog: fallbackCatalog(), source: "fallback", error: err };
+      console.error("Error cargando killers.json:", err);
+      return [];
     }
-  }
-
-  function mergeCatalogs(existingCatalog, latestCatalog) {
-    const merged = [];
-    const seen = new Set();
-    const latestMap = new Map((latestCatalog || []).map(item => [item.key, item]));
-
-    for (const raw of existingCatalog || []) {
-      const item = sanitizeCatalogEntry(raw);
-      if (!item || seen.has(item.key)) continue;
-
-      const latest = latestMap.get(item.key) || null;
-      merged.push({
-        key: item.key,
-        id: latest?.id || item.id || null,
-        name: latest?.name || item.name,
-        image: latest?.image || item.image || null
-      });
-      seen.add(item.key);
-    }
-
-    for (const raw of latestCatalog || []) {
-      const item = sanitizeCatalogEntry(raw);
-      if (!item || seen.has(item.key)) continue;
-      merged.push(item);
-      seen.add(item.key);
-    }
-
-    return merged;
   }
 
   function catalogMap(catalog) {
     const map = new Map();
-    for (const raw of catalog || []) {
-      const item = sanitizeCatalogEntry(raw);
-      if (item) map.set(item.key, item);
-    }
+    for (const item of catalog || []) map.set(item.key, item);
     return map;
   }
 
-  function displayValueForEntry(entry, mode) {
-    if (!entry) return "—";
-    if (mode === "ids" && entry.id) return entry.id;
-    return entry.name;
-  }
-
-  function findEntryByLegacyValue(value, catalog) {
-    if (typeof value !== "string" || !value.trim()) return null;
-    const target = value.trim();
-    const targetNorm = normalizeText(target);
-    const items = catalog || [];
-
-    return items.find(item =>
-      item.key === target ||
-      item.name === target ||
-      normalizeText(item.name) === targetNorm ||
-      (item.id && (item.id === target || normalizeText(item.id) === targetNorm))
-    ) || null;
-  }
-
-  function convertLegacyDoc(data, latestCatalog) {
-    const mergedLatest = latestCatalog || fallbackCatalog();
-    const legacyRoster = Array.isArray(data?.roster) ? data.roster : [];
-
-    const legacyCatalog = legacyRoster.map(value => {
-      const matched = findEntryByLegacyValue(value, mergedLatest);
-      if (matched) return matched;
-      if (typeof value !== "string" || !value.trim()) return null;
-
-      const name = value.trim();
-      return {
-        key: killerKeyFromName(name),
-        id: /^K\d+$/i.test(name) ? name : null,
-        name,
-        image: null
-      };
-    }).filter(Boolean);
-
-    const catalog = mergeCatalogs(legacyCatalog, mergedLatest);
-    const legacyIndex = Number.isInteger(data?.index) ? data.index : 0;
-
-    let queue = [];
-    if (Array.isArray(data?.queue) && data.queue.every(v => typeof v === "number")) {
-      queue = data.queue
-        .slice(Math.max(0, legacyIndex))
-        .map(i => legacyCatalog[i]?.key)
-        .filter(Boolean);
-    }
-
-    const historyKeys = Array.isArray(data?.history)
-      ? data.history.map(value => findEntryByLegacyValue(value, catalog)?.key || null).filter(Boolean)
-      : [];
-
-    const queued = new Set(queue);
-    const seen = new Set([...queue, ...historyKeys]);
-
-    for (const item of catalog) {
-      if (!seen.has(item.key) && !queued.has(item.key)) {
-        queue.push(item.key);
-      }
-    }
-
-    if (!queue.length) {
-      queue = shuffle(catalog.map(item => item.key));
-    }
-
-    return {
-      schemaVersion: 2,
-      cycle: Number.isFinite(data?.cycle) ? data.cycle : 1,
-      catalog,
-      queue,
-      historyKeys,
-      total: catalog.length,
-      prefs: {
-        mode: data?.prefs?.mode === "ids" ? "ids" : "current",
-        recentWindow: Number.isFinite(data?.prefs?.recentWindow) ? data.prefs.recentWindow : 5,
-        imgBase: DEFAULT_IMG_BASE
-      },
-      rosterSource: activeCatalogSource,
-      rosterFetchedAt: Date.now()
-    };
-  }
-
   function normalizeStoredData(data, latestCatalog) {
-    if (!data || typeof data !== "object") {
-      const catalog = mergeCatalogs([], latestCatalog || fallbackCatalog());
-      return {
-        schemaVersion: 2,
-        cycle: 1,
-        catalog,
-        queue: shuffle(catalog.map(item => item.key)),
-        historyKeys: [],
-        total: catalog.length,
-        prefs: { mode: "current", recentWindow: 5, imgBase: DEFAULT_IMG_BASE },
-        rosterSource: activeCatalogSource,
-        rosterFetchedAt: Date.now()
-      };
-    }
-
-    if (!Array.isArray(data.catalog) || !Array.isArray(data.queue)) {
-      return convertLegacyDoc(data, latestCatalog);
-    }
-
-    const catalog = mergeCatalogs(data.catalog, latestCatalog || []);
+    const catalog = latestCatalog || [];
     const cmap = catalogMap(catalog);
 
-    const queue = Array.isArray(data.queue)
-      ? data.queue.filter(key => typeof key === "string" && cmap.has(key))
-      : [];
+    if (!data || !Array.isArray(data.queue)) {
+      return {
+        schemaVersion: 2, cycle: 1, catalog, queue: shuffle(catalog.map(i => i.key)),
+        historyKeys: [], total: catalog.length, prefs: { mode: "current", recentWindow: 5, imgBase: DEFAULT_IMG_BASE }
+      };
+    }
 
-    const historyKeys = Array.isArray(data.historyKeys)
-      ? data.historyKeys.filter(key => typeof key === "string" && cmap.has(key))
-      : [];
-
+    const queue = data.queue.filter(key => cmap.has(key));
+    const historyKeys = Array.isArray(data.historyKeys) ? data.historyKeys.filter(key => cmap.has(key)) : [];
+    
     const seen = new Set([...queue, ...historyKeys]);
     for (const item of catalog) {
       if (!seen.has(item.key)) queue.push(item.key);
     }
 
-    return {
-      schemaVersion: 2,
-      cycle: Number.isFinite(data.cycle) ? data.cycle : 1,
-      catalog,
-      queue,
-      historyKeys,
-      total: catalog.length,
-      prefs: {
-        mode: data?.prefs?.mode === "ids" ? "ids" : "current",
-        recentWindow: Number.isFinite(data?.prefs?.recentWindow) ? data.prefs.recentWindow : 5,
-        imgBase: DEFAULT_IMG_BASE
-      },
-      rosterSource: activeCatalogSource,
-      rosterFetchedAt: Date.now()
-    };
+    return { ...data, catalog, queue, total: catalog.length, historyKeys };
   }
 
   function renderImage(entry) {
-    if (!entry) {
-      heroImg.src = "";
-      heroImg.alt = "";
-      return;
-    }
+    if (!entry) { heroImg.src = ""; heroImg.alt = ""; return; }
+    
+    // Si el JSON tiene un enlace personalizado (entry.image), usa ese. Si no, busca en Otz.
+    const newSrc = entry.image || killerImgUrl(state.prefs.imgBase, entry.name);
+    
+    heroImg.classList.remove('animate-pop');
+    void heroImg.offsetWidth; 
+    heroImg.classList.add('animate-pop');
 
-    const preferred = entry.image || killerImgUrl(state.prefs.imgBase, entry.name);
     heroImg.alt = entry.name;
-    heroImg.src = preferred;
-
+    heroImg.src = newSrc;
+    
     heroImg.onerror = () => {
       heroImg.onerror = null;
-      const fallback = killerImgUrl(state.prefs.imgBase, entry.name);
-
-      if (preferred !== fallback && fallback) {
-        heroImg.src = fallback;
-        heroImg.onerror = () => {
-          heroImg.onerror = null;
-          heroImg.src = `data:image/svg+xml,${encodeURIComponent(
-            `<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><rect width='100%' height='100%' fill='%230c0e12'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%237d869c' font-family='sans-serif' font-size='18'>${entry.name || "?"}</text></svg>`
-          )}`;
-        };
-      } else {
-        heroImg.src = `data:image/svg+xml,${encodeURIComponent(
-          `<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><rect width='100%' height='100%' fill='%230c0e12'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%237d869c' font-family='sans-serif' font-size='18'>${entry.name || "?"}</text></svg>`
-        )}`;
-      }
+      heroImg.src = `data:image/svg+xml,${encodeURIComponent(
+        `<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><rect width='100%' height='100%' fill='%230c0e12'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%237d869c' font-family='sans-serif' font-size='18'>${entry.name || "?"}</text></svg>`
+      )}`;
     };
   }
 
-  function getCurrentCatalogMap() {
-    return catalogMap(state.catalog);
-  }
-
   function render() {
-    controlsCard.style.display = "block";
-    mainCard.style.display = "block";
-    listCard.style.display = "block";
-
+    controlsCard.style.display = "block"; mainCard.style.display = "block"; listCard.style.display = "block";
     cycleEl.textContent = String(state.cycle || 1);
     totalEl.textContent = String(state.total || state.catalog.length || 0);
 
-    const cmap = getCurrentCatalogMap();
+    const cmap = catalogMap(state.catalog);
     const currentKey = state.queue[0] || null;
     const currentEntry = currentKey ? cmap.get(currentKey) : null;
 
     if (!currentEntry) {
-      nextEl.textContent = "—";
-      posEl.textContent = "—";
-      emptyMsg.style.display = "block";
-      heroImg.src = "";
-      heroImg.alt = "";
+      nextEl.textContent = "—"; posEl.textContent = "—"; emptyMsg.style.display = "block"; renderImage(null);
     } else {
-      nextEl.textContent = displayValueForEntry(currentEntry, state.prefs.mode);
+      nextEl.textContent = currentEntry.name;
       posEl.textContent = String((state.total - state.queue.length) + 1);
       emptyMsg.style.display = "none";
       renderImage(currentEntry);
@@ -718,252 +301,98 @@
       const entry = cmap.get(key);
       if (!entry) return "";
       const img = entry.image || killerImgUrl(state.prefs.imgBase, entry.name);
-      const label = escapeHtml(displayValueForEntry(entry, state.prefs.mode));
-      return `<span class="pill"><img src="${img}" alt="" onerror="this.onerror=null;this.src='';this.style.background='#0c0e12'">${label}</span>`;
+      return `<span class="pill"><img src="${img}" alt="" onerror="this.src='';this.style.background='#0c0e12'">${entry.name}</span>`;
     }).join("");
 
-    const hist = state.historyKeys.slice(-12).reverse().map(key => {
-      const entry = cmap.get(key);
-      return entry ? escapeHtml(displayValueForEntry(entry, state.prefs.mode)) : escapeHtml(key);
-    });
-
-    recentHistory.innerHTML = hist.length
-      ? `<ul>${hist.map(v => `<li>${v}</li>`).join("")}</ul>`
-      : `<p class="muted">Sin historial aún.</p>`;
-  }
-
-  function violatesRecentWindow(candidateKey, historyKeys, prefs) {
-    const w = Number(prefs?.recentWindow || 0);
-    if (!w) return false;
-    return historyKeys.slice(-w).includes(candidateKey);
+    const hist = state.historyKeys.slice(-12).reverse().map(key => cmap.get(key)?.name || key);
+    recentHistory.innerHTML = hist.length ? `<ul>${hist.map(v => `<li>${v}</li>`).join("")}</ul>` : `<p class="muted">Sin historial aún.</p>`;
   }
 
   async function ensureDoc() {
     const snap = await getDoc(userDocRef);
-
-    if (!snap.exists()) {
-      const initial = normalizeStoredData(null, activeCatalog);
-      await setDoc(userDocRef, {
-        ...initial,
-        updatedAt: serverTimestamp()
-      });
-      return;
-    }
-
-    const current = normalizeStoredData(snap.data(), activeCatalog);
-    await setDoc(userDocRef, {
-      ...current,
-      updatedAt: serverTimestamp()
-    }, { merge: false });
+    const dataToSave = normalizeStoredData(snap.exists() ? snap.data() : null, activeCatalog);
+    await setDoc(userDocRef, { ...dataToSave, updatedAt: serverTimestamp() });
   }
 
   async function advance(markPlayed = true) {
     await runTransaction(db, async tx => {
       const s = await tx.get(userDocRef);
-      if (!s.exists()) throw new Error("Documento no encontrado");
-
+      if (!s.exists()) return;
       const docData = normalizeStoredData(s.data(), activeCatalog);
-      const allKeys = docData.catalog.map(item => item.key);
-
+      
       if (!docData.queue.length) {
-        docData.queue = shuffle(allKeys);
-        docData.cycle = (docData.cycle || 1) + 1;
+        docData.queue = shuffle(docData.catalog.map(i => i.key)); docData.cycle++;
       } else if (markPlayed) {
         const currentKey = docData.queue.shift();
         if (currentKey) docData.historyKeys.push(currentKey);
-
-        if (!docData.queue.length) {
-          docData.queue = shuffle(allKeys);
-          docData.cycle = (docData.cycle || 1) + 1;
-        }
+        if (!docData.queue.length) { docData.queue = shuffle(docData.catalog.map(i => i.key)); docData.cycle++; }
       } else {
         if (docData.queue.length > 1) {
-          const rotated = [...docData.queue];
-          const head = rotated.shift();
-          let pos = -1;
-
-          for (let i = 0; i < rotated.length; i++) {
-            if (!violatesRecentWindow(rotated[i], docData.historyKeys, docData.prefs)) {
-              pos = i;
-              break;
-            }
-          }
-
-          if (pos > -1) {
-            const [picked] = rotated.splice(pos, 1);
-            rotated.unshift(picked);
-          }
-
-          rotated.push(head);
-          docData.queue = rotated;
+          const head = docData.queue.shift(); docData.queue.push(head); 
         }
       }
-
-      docData.total = docData.catalog.length;
-      docData.rosterSource = activeCatalogSource;
-      docData.rosterFetchedAt = Date.now();
-
-      tx.set(userDocRef, {
-        ...docData,
-        updatedAt: serverTimestamp()
-      }, { merge: false });
+      
+      tx.set(userDocRef, { ...docData, updatedAt: serverTimestamp() }, { merge: false });
     });
   }
 
   async function resetCycle() {
     await runTransaction(db, async tx => {
       const s = await tx.get(userDocRef);
-      if (!s.exists()) throw new Error("Documento no encontrado");
-
+      if (!s.exists()) return;
       const docData = normalizeStoredData(s.data(), activeCatalog);
       docData.queue = shuffle(docData.catalog.map(item => item.key));
-      docData.cycle = (docData.cycle || 1) + 1;
-      docData.total = docData.catalog.length;
-      docData.rosterSource = activeCatalogSource;
-      docData.rosterFetchedAt = Date.now();
-
-      tx.set(userDocRef, {
-        ...docData,
-        updatedAt: serverTimestamp()
-      }, { merge: false });
+      docData.cycle++;
+      tx.set(userDocRef, { ...docData, updatedAt: serverTimestamp() }, { merge: false });
     });
   }
 
-  exportBtn.addEventListener("click", async () => {
-    const snap = await getDoc(userDocRef);
-    const data = snap.data();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "dbd_queue_state.json";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  });
-
-  importBtn.addEventListener("click", () => importFile.click());
-
-  importFile.addEventListener("change", async e => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const text = await file.text();
-      const parsed = JSON.parse(text);
-      const normalized = normalizeStoredData(parsed, activeCatalog);
-
-      await setDoc(userDocRef, {
-        ...normalized,
-        updatedAt: serverTimestamp()
-      }, { merge: false });
-    } catch (err) {
-      alert("Archivo inválido: " + err.message);
-    }
-
-    importFile.value = "";
-  });
-
-  markPlayedBtn.addEventListener("click", () => advance(true));
-  skipBtn.addEventListener("click", () => advance(false));
-  resetCycleBtn.addEventListener("click", () => resetCycle());
-
+  $("markPlayedBtn").addEventListener("click", () => advance(true));
+  $("skipBtn").addEventListener("click", () => advance(false));
+  $("resetCycleBtn").addEventListener("click", () => resetCycle());
+  
   window.addEventListener("keydown", e => {
-    const tag = e.target?.tagName;
-    if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
-
+    if (["INPUT", "SELECT", "TEXTAREA"].includes(e.target?.tagName)) return;
     const key = e.key.toLowerCase();
-    if (key === "j") advance(true);
-    if (key === "k") advance(false);
-    if (key === "r") resetCycle();
+    if (key === "j") advance(true); if (key === "k") advance(false); if (key === "r") resetCycle();
   });
 
-  setPersistence(auth, browserLocalPersistence).catch(console.error);
+  (async () => {
+    activeCatalog = await loadActiveCatalog();
+    
+    setPersistence(auth, browserLocalPersistence).catch(console.error);
+    
+    $("googleLoginBtn").addEventListener("click", async () => {
+      if (isGoogleUser) { await auth.signOut(); return; }
+      try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (err) { alert("Error: " + err.message); }
+    });
 
-  googleLoginBtn.addEventListener("click", async () => {
-    if (isGoogleUser) {
-      await auth.signOut();
-      return;
-    }
-
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (err) {
-      alert("Error al iniciar sesión con Google: " + err.message);
-    }
-  });
-
-  try {
-    const loaded = await loadActiveCatalog();
-    activeCatalog = loaded.catalog;
-    activeCatalogSource = loaded.source;
-
-    dataSourceStatus.textContent = loaded.source === "api"
-      ? `Roster cargado desde API (${loaded.catalog.length} killers).`
-      : loaded.source === "cache"
-        ? `API no disponible. Usando caché local (${loaded.catalog.length} killers).`
-        : `API no disponible. Usando fallback local (${loaded.catalog.length} killers).`;
-  } catch (err) {
-    activeCatalog = fallbackCatalog();
-    activeCatalogSource = "fallback";
-    dataSourceStatus.textContent = `Error al preparar el roster. Usando fallback local (${activeCatalog.length} killers).`;
-    console.error(err);
-  }
-
-  onAuthStateChanged(auth, async user => {
-    if (user) {
-      isGoogleUser = !user.isAnonymous;
-      authStatus.textContent = user.isAnonymous
-        ? "Autenticado (anónimo)"
-        : `Autenticado con Google${user.email ? ` (${user.email})` : ""}`;
-
-      googleLoginBtn.textContent = isGoogleUser ? "Cerrar sesión" : "Iniciar sesión con Google";
-
-      userDocRef = doc(db, "users", user.uid, "dbdQueue", "current");
-      state.prefs.imgBase = DEFAULT_IMG_BASE;
-
-      await ensureDoc();
-
-      if (unsub) unsub();
-
-      unsub = onSnapshot(userDocRef, snap => {
-        if (!snap.exists()) {
-          syncStatus.textContent = "Documento no encontrado.";
-          return;
-        }
-
-        const data = normalizeStoredData(snap.data(), activeCatalog);
-        state.uid = user.uid;
-        state.cycle = data.cycle;
-        state.queue = data.queue;
-        state.historyKeys = data.historyKeys;
-        state.catalog = data.catalog;
-        state.total = data.total;
-        state.prefs = data.prefs;
-        state.rosterSource = data.rosterSource || activeCatalogSource;
-
-        render();
-        syncStatus.textContent = "Sincronizado.";
-      }, err => {
-        syncStatus.textContent = `Error de sincronización: ${err.message}`;
-      });
-
-      controlsCard.style.display = "block";
-      mainCard.style.display = "block";
-      listCard.style.display = "block";
-    } else {
-      isGoogleUser = false;
-      googleLoginBtn.textContent = "Iniciar sesión con Google";
-      authStatus.textContent = "No autenticado.";
-
-      signInAnonymously(auth).catch(err => {
-        authStatus.textContent = `Error de autenticación: ${err.code} — ${err.message}`;
-        console.error(err);
-      });
-    }
-  });
+    onAuthStateChanged(auth, async user => {
+      if (user) {
+        isGoogleUser = !user.isAnonymous;
+        authStatus.textContent = user.isAnonymous ? "Autenticado (anónimo)" : `Sesión: ${user.email || 'Google'}`;
+        $("googleLoginBtn").textContent = isGoogleUser ? "Cerrar sesión" : "Iniciar sesión con Google";
+        userDocRef = doc(db, "users", user.uid, "dbdQueue", "current");
+        
+        await ensureDoc();
+        if (unsub) unsub();
+        
+        unsub = onSnapshot(userDocRef, snap => {
+          if (!snap.exists()) return;
+          const data = normalizeStoredData(snap.data(), activeCatalog);
+          Object.assign(state, data, { uid: user.uid });
+          render();
+          syncStatus.textContent = "Sincronizado con la nube.";
+          syncStatus.style.color = "var(--ok)";
+        });
+      } else {
+        isGoogleUser = false;
+        $("googleLoginBtn").textContent = "Iniciar sesión con Google";
+        authStatus.textContent = "No autenticado.";
+        signInAnonymously(auth).catch(console.error);
+      }
+    });
+  })();
 </script>
 </body>
 </html>
