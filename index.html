@@ -3,9 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>DBD Killer Randomizer — con retratos</title>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3519154404145001"
-     crossorigin="anonymous"></script>
+  <title>DBD Killer Randomizer — API + fallback</title>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3519154404145001" crossorigin="anonymous"></script>
   <meta name="color-scheme" content="dark light" />
   <style>
     :root{
@@ -38,9 +37,7 @@
     .btn-ok{background:#1f3a35;border-color:#2c5c50}
     .btn-warn{background:#3a2f1f;border-color:#6a5638}
     .muted{color:var(--muted)}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
     details summary{cursor:pointer}
-    /* Hero */
     .hero{display:grid;grid-template-columns:160px 1fr;gap:14px;align-items:center}
     .hero .art{
       width:160px;height:160px;border-radius:12px;overflow:hidden;border:1px solid var(--border);
@@ -49,33 +46,29 @@
     .hero .art img{width:100%;height:100%;object-fit:cover;display:block}
     .hero .meta small{color:var(--muted)}
     .hero .title{font-size:1.6rem;font-weight:700;margin:2px 0 8px}
-
-    /* Ocultar la línea que contiene el ciclo sin tocar el HTML */
-    .hero .meta .muted:has(#cycle){ display:none !important; }
-
-    /* Chips con mini retrato */
     .pill{
       display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--chip-border);
       border-radius:999px;background:var(--chip);margin:4px 6px 0 0;white-space:nowrap
     }
     .pill img{width:22px;height:22px;border-radius:50%;object-fit:cover;flex:0 0 auto;background:#0c0e12}
-    .formline{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-    input[type="text"]{
-      background:#10141b;border:1px solid #2c3544;color:var(--text);padding:8px 10px;border-radius:8px;min-width:260px
-    }
-    select{background:#10141b;border:1px solid #2c3544;color:var(--text);padding:8px 10px;border-radius:8px}
-    label{font-size:.95rem}
     .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#11151c;border:1px solid #2c3544;padding:2px 6px;border-radius:6px}
+    .status-line{margin-top:6px}
+    .tiny{font-size:.92rem}
+    @media (max-width:640px){
+      .hero{grid-template-columns:1fr}
+      .hero .art{width:100%;max-width:220px;height:220px}
+    }
   </style>
 </head>
 <body>
 <div class="wrap">
   <h1>DBD Killer Randomizer</h1>
-  <p class="muted">Orden aleatorio de asesinos de dead by daylight sin repetidos hasta completar el ciclo.</p>
+  <p class="muted">Orden aleatorio de asesinos de Dead by Daylight sin repetidos hasta completar el ciclo.</p>
 
   <div class="card">
     <div id="authStatus" class="muted">Conectando…</div>
-    <div id="syncStatus" class="muted"></div>
+    <div id="syncStatus" class="muted status-line"></div>
+    <div id="dataSourceStatus" class="muted status-line tiny"></div>
     <button id="googleLoginBtn" style="margin-top:10px">Iniciar sesión con Google</button>
   </div>
 
@@ -119,13 +112,11 @@
   </div>
 </div>
 
-<!-- Firebase + App -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, browserLocalPersistence, setPersistence, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { getFirestore, enableIndexedDbPersistence, doc, getDoc, setDoc, updateDoc, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, enableIndexedDbPersistence, doc, getDoc, setDoc, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  // ===== CONFIG FIREBASE =====
   const firebaseConfig = {
     apiKey: "AIzaSyDnv6pL350yl5hCHhwt3U46rJ7lDv3aRv8",
     authDomain: "dbd-random-list.firebaseapp.com",
@@ -135,8 +126,8 @@
     appId: "1:504438131037:web:904681ff503e2c73c500b4",
     measurementId: "G-724ZR5052C"
   };
-  // ===== ROSTER =====
-  const KILLERS = [
+
+  const FALLBACK_KILLERS = [
     "The Trapper","The Wraith","The Hillbilly","The Nurse","The Shape",
     "The Hag","The Doctor","The Huntress","The Cannibal","The Nightmare",
     "The Pig","The Clown","The Spirit","The Legion","The Plague",
@@ -148,7 +139,6 @@
     "The Krasue"
   ];
 
-  // ===== SLUGIFY PARA IMÁGENES =====
   const SPECIAL_SLUGS = {
     "The Ghost Face": "ghostface",
     "The Demogorgon": "demogorgon",
@@ -179,300 +169,801 @@
     "The Cenobite": "pinhead",
     "The Krasue": "krasue"
   };
-  const SPECIAL_SLUGS_NORM = {};
-  Object.keys(SPECIAL_SLUGS).forEach(k => { SPECIAL_SLUGS_NORM[k.toLowerCase().trim()] = SPECIAL_SLUGS[k]; });
 
-  function slugifyKiller(name){
-    if(!name) return "";
+  const SPECIAL_SLUGS_NORM = {};
+  Object.keys(SPECIAL_SLUGS).forEach(k => {
+    SPECIAL_SLUGS_NORM[k.toLowerCase().trim()] = SPECIAL_SLUGS[k];
+  });
+
+  const API_BASE = "https://dbd.tricky.lol/api";
+  const DEFAULT_IMG_BASE = "https://otz-addon-tierlist.pages.dev/public/killers/";
+  const LOCAL_CACHE_KEY = "dbd_tricky_catalog_cache_v2";
+  const LOCAL_CACHE_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 7;
+
+  const $ = id => document.getElementById(id);
+  const authStatus = $("authStatus");
+  const syncStatus = $("syncStatus");
+  const dataSourceStatus = $("dataSourceStatus");
+  const controlsCard = $("controlsCard");
+  const mainCard = $("mainCard");
+  const listCard = $("listCard");
+  const heroImg = $("heroImg");
+  const cycleEl = $("cycle");
+  const nextEl = $("nextItem");
+  const posEl = $("position");
+  const totalEl = $("total");
+  const emptyMsg = $("emptyMsg");
+  const remainingList = $("remainingList");
+  const recentHistory = $("recentHistory");
+  const markPlayedBtn = $("markPlayedBtn");
+  const skipBtn = $("skipBtn");
+  const resetCycleBtn = $("resetCycleBtn");
+  const exportBtn = $("exportBtn");
+  const importBtn = $("importBtn");
+  const importFile = $("importFile");
+  const googleLoginBtn = $("googleLoginBtn");
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  enableIndexedDbPersistence(db).catch(() => {});
+
+  let userDocRef = null;
+  let unsub = null;
+  let isGoogleUser = false;
+  let activeCatalog = [];
+  let activeCatalogSource = "fallback";
+
+  const state = {
+    uid: null,
+    cycle: 1,
+    queue: [],
+    historyKeys: [],
+    catalog: [],
+    total: 0,
+    prefs: {
+      mode: "current",
+      recentWindow: 5,
+      imgBase: DEFAULT_IMG_BASE
+    },
+    rosterSource: "fallback"
+  };
+
+  function shuffle(a) {
+    const arr = [...a];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  function normalizeText(value) {
+    return String(value ?? "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase();
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function killerKeyFromName(name) {
+    const norm = normalizeText(name)
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    return norm ? `killer:${norm}` : "";
+  }
+
+  function looksLikeUrl(value) {
+    return typeof value === "string" && /^https?:\/\//i.test(value);
+  }
+
+  function slugifyKiller(name) {
+    if (!name) return "";
     const key = String(name).toLowerCase().trim();
     if (SPECIAL_SLUGS_NORM[key]) return SPECIAL_SLUGS_NORM[key];
     let decoded = String(name);
-    try { decoded = decodeURIComponent(decoded); } catch(e){}
+    try { decoded = decodeURIComponent(decoded); } catch {}
     return decoded
-      .replace(/^the\s+/i,"")
-      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+      .replace(/^the\s+/i, "")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
       .toLowerCase().trim()
-      .replace(/\s+/g,"_")
-      .replace(/%20/g,"_")
-      .replace(/[^a-z0-9_]+/g,"");
+      .replace(/\s+/g, "_")
+      .replace(/%20/g, "_")
+      .replace(/[^a-z0-9_]+/g, "");
   }
-  function killerImgUrl(base, name){
-    if (!name || typeof name !== "string" || name === "undefined") return "";
+
+  function killerImgUrl(base, name) {
+    if (!name || typeof name !== "string") return "";
     if (name === "The Krasue") {
       return "https://deadbydaylight.wiki.gg/images/K41_TheKrasue_Portrait.png?3513ba";
     }
     return `${base}${slugifyKiller(name)}.png`;
   }
 
-  function renderImage(name){
-    if (!name) {
+  function sanitizeCatalogEntry(entry) {
+    if (!entry || typeof entry !== "object") return null;
+    const name = typeof entry.name === "string" ? entry.name.trim() : "";
+    if (!name) return null;
+    const key = typeof entry.key === "string" && entry.key.trim() ? entry.key.trim() : killerKeyFromName(name);
+    if (!key) return null;
+    const id = typeof entry.id === "string" && entry.id.trim() ? entry.id.trim() : null;
+    const image = looksLikeUrl(entry.image) ? entry.image.trim() : null;
+    return { key, id, name, image };
+  }
+
+  function fallbackCatalog() {
+    return FALLBACK_KILLERS.map(name => ({
+      key: killerKeyFromName(name),
+      id: null,
+      name,
+      image: null
+    }));
+  }
+
+  function normalizeApiCatalog(payload) {
+    // 1. Intentar encontrar un array directamente
+    const candidateArrays = [
+      payload,
+      payload?.data,
+      payload?.characters,
+      payload?.results,
+      payload?.items
+    ];
+
+    let rawList = candidateArrays.find(Array.isArray);
+
+    // 2. Si no hay un array, intentar extraer los valores si es un Diccionario/Objeto
+    if (!rawList && payload && typeof payload === "object") {
+      // Si los datos están anidados en "data" o en el root
+      const sourceObj = payload.data || payload; 
+      rawList = Object.values(sourceObj).filter(v => v && typeof v === "object");
+    }
+
+    if (!rawList) rawList = [];
+
+    const normalized = rawList.map(item => {
+      if (typeof item === "string") {
+        const name = item.trim();
+        return name ? { key: killerKeyFromName(name), id: null, name, image: null } : null;
+      }
+
+      if (!item || typeof item !== "object") return null;
+
+      // 3. Helper para buscar propiedades ignorando mayúsculas/minúsculas
+      const getProp = (obj, keys) => {
+        const lowerObjKeys = Object.keys(obj).reduce((acc, k) => {
+          acc[k.toLowerCase()] = obj[k];
+          return acc;
+        }, {});
+        const foundKey = keys.find(k => lowerObjKeys[k.toLowerCase()] !== undefined);
+        return foundKey ? lowerObjKeys[foundKey.toLowerCase()] : undefined;
+      };
+
+      const name = getProp(item, [
+        "name", "characterName", "displayName", "alias", "title", "character", "killer"
+      ]);
+
+      if (!name || typeof name !== "string" || !name.trim()) return null;
+
+      const role = getProp(item, ["role", "type", "side"]);
+      if (role && typeof role === "string" && !/killer/i.test(role)) return null;
+
+      const id = getProp(item, ["id", "characterId", "code", "tag", "characterCode"]);
+      const image = getProp(item, ["image", "imageUrl", "portrait", "portraitUrl", "icon", "iconUrl", "thumbnail", "thumbnailUrl"]);
+
+      return {
+        key: killerKeyFromName(name),
+        id: (typeof id === "string" || typeof id === "number") ? String(id).trim() : null,
+        name: name.trim(),
+        image: looksLikeUrl(image) ? image.trim() : null
+      };
+    }).filter(Boolean);
+
+    const dedup = new Map();
+    for (const entry of normalized) {
+      if (!dedup.has(entry.key)) {
+        dedup.set(entry.key, entry);
+      } else {
+        const prev = dedup.get(entry.key);
+        dedup.set(entry.key, {
+          key: prev.key,
+          id: prev.id || entry.id || null,
+          name: prev.name || entry.name,
+          image: prev.image || entry.image || null
+        });
+      }
+    }
+
+    return Array.from(dedup.values());
+  }
+
+  function readCatalogCache() {
+    try {
+      const raw = localStorage.getItem(LOCAL_CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.catalog)) return null;
+      if (typeof parsed.savedAt !== "number") return null;
+      if (Date.now() - parsed.savedAt > LOCAL_CACHE_MAX_AGE_MS) return null;
+      const catalog = parsed.catalog.map(sanitizeCatalogEntry).filter(Boolean);
+      return catalog.length ? catalog : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function writeCatalogCache(catalog) {
+    try {
+      localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify({
+        savedAt: Date.now(),
+        catalog
+      }));
+    } catch {}
+  }
+
+  async function fetchJsonWithTimeout(url, timeoutMs = 15000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        mode: "cors",
+        cache: "no-store",
+        headers: { "Accept": "application/json" },
+        signal: controller.signal
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      return await res.json();
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function fetchJsonWithRetry(url, attempts = 3) {
+    let lastErr = null;
+
+    for (let i = 0; i < attempts; i++) {
+      try {
+        return await fetchJsonWithTimeout(url, 15000);
+      } catch (err) {
+        lastErr = err;
+        if (i < attempts - 1) {
+          await sleep(1200 * (i + 1));
+        }
+      }
+    }
+
+    throw lastErr;
+  }
+
+  async function loadActiveCatalog() {
+    const cached = readCatalogCache();
+
+    try {
+      const payload = await fetchJsonWithRetry(`${API_BASE}/characters?role=killer`, 3);
+      console.log("API payload /characters?role=killer:", payload);
+
+      const catalog = normalizeApiCatalog(payload);
+      console.log("Catalog normalizado:", catalog);
+
+      if (!catalog.length) {
+        throw new Error("La API respondió, pero el catálogo quedó vacío tras normalizar.");
+      }
+
+      writeCatalogCache(catalog);
+      return { catalog, source: "api" };
+    } catch (err) {
+      console.error("Error cargando catálogo desde API:", err);
+
+      if (cached?.length) {
+        return { catalog: cached, source: "cache", error: err };
+      }
+
+      return { catalog: fallbackCatalog(), source: "fallback", error: err };
+    }
+  }
+
+  function mergeCatalogs(existingCatalog, latestCatalog) {
+    const merged = [];
+    const seen = new Set();
+    const latestMap = new Map((latestCatalog || []).map(item => [item.key, item]));
+
+    for (const raw of existingCatalog || []) {
+      const item = sanitizeCatalogEntry(raw);
+      if (!item || seen.has(item.key)) continue;
+
+      const latest = latestMap.get(item.key) || null;
+      merged.push({
+        key: item.key,
+        id: latest?.id || item.id || null,
+        name: latest?.name || item.name,
+        image: latest?.image || item.image || null
+      });
+      seen.add(item.key);
+    }
+
+    for (const raw of latestCatalog || []) {
+      const item = sanitizeCatalogEntry(raw);
+      if (!item || seen.has(item.key)) continue;
+      merged.push(item);
+      seen.add(item.key);
+    }
+
+    return merged;
+  }
+
+  function catalogMap(catalog) {
+    const map = new Map();
+    for (const raw of catalog || []) {
+      const item = sanitizeCatalogEntry(raw);
+      if (item) map.set(item.key, item);
+    }
+    return map;
+  }
+
+  function displayValueForEntry(entry, mode) {
+    if (!entry) return "—";
+    if (mode === "ids" && entry.id) return entry.id;
+    return entry.name;
+  }
+
+  function findEntryByLegacyValue(value, catalog) {
+    if (typeof value !== "string" || !value.trim()) return null;
+    const target = value.trim();
+    const targetNorm = normalizeText(target);
+    const items = catalog || [];
+
+    return items.find(item =>
+      item.key === target ||
+      item.name === target ||
+      normalizeText(item.name) === targetNorm ||
+      (item.id && (item.id === target || normalizeText(item.id) === targetNorm))
+    ) || null;
+  }
+
+  function convertLegacyDoc(data, latestCatalog) {
+    const mergedLatest = latestCatalog || fallbackCatalog();
+    const legacyRoster = Array.isArray(data?.roster) ? data.roster : [];
+
+    const legacyCatalog = legacyRoster.map(value => {
+      const matched = findEntryByLegacyValue(value, mergedLatest);
+      if (matched) return matched;
+      if (typeof value !== "string" || !value.trim()) return null;
+
+      const name = value.trim();
+      return {
+        key: killerKeyFromName(name),
+        id: /^K\d+$/i.test(name) ? name : null,
+        name,
+        image: null
+      };
+    }).filter(Boolean);
+
+    const catalog = mergeCatalogs(legacyCatalog, mergedLatest);
+    const legacyIndex = Number.isInteger(data?.index) ? data.index : 0;
+
+    let queue = [];
+    if (Array.isArray(data?.queue) && data.queue.every(v => typeof v === "number")) {
+      queue = data.queue
+        .slice(Math.max(0, legacyIndex))
+        .map(i => legacyCatalog[i]?.key)
+        .filter(Boolean);
+    }
+
+    const historyKeys = Array.isArray(data?.history)
+      ? data.history.map(value => findEntryByLegacyValue(value, catalog)?.key || null).filter(Boolean)
+      : [];
+
+    const queued = new Set(queue);
+    const seen = new Set([...queue, ...historyKeys]);
+
+    for (const item of catalog) {
+      if (!seen.has(item.key) && !queued.has(item.key)) {
+        queue.push(item.key);
+      }
+    }
+
+    if (!queue.length) {
+      queue = shuffle(catalog.map(item => item.key));
+    }
+
+    return {
+      schemaVersion: 2,
+      cycle: Number.isFinite(data?.cycle) ? data.cycle : 1,
+      catalog,
+      queue,
+      historyKeys,
+      total: catalog.length,
+      prefs: {
+        mode: data?.prefs?.mode === "ids" ? "ids" : "current",
+        recentWindow: Number.isFinite(data?.prefs?.recentWindow) ? data.prefs.recentWindow : 5,
+        imgBase: DEFAULT_IMG_BASE
+      },
+      rosterSource: activeCatalogSource,
+      rosterFetchedAt: Date.now()
+    };
+  }
+
+  function normalizeStoredData(data, latestCatalog) {
+    if (!data || typeof data !== "object") {
+      const catalog = mergeCatalogs([], latestCatalog || fallbackCatalog());
+      return {
+        schemaVersion: 2,
+        cycle: 1,
+        catalog,
+        queue: shuffle(catalog.map(item => item.key)),
+        historyKeys: [],
+        total: catalog.length,
+        prefs: { mode: "current", recentWindow: 5, imgBase: DEFAULT_IMG_BASE },
+        rosterSource: activeCatalogSource,
+        rosterFetchedAt: Date.now()
+      };
+    }
+
+    if (!Array.isArray(data.catalog) || !Array.isArray(data.queue)) {
+      return convertLegacyDoc(data, latestCatalog);
+    }
+
+    const catalog = mergeCatalogs(data.catalog, latestCatalog || []);
+    const cmap = catalogMap(catalog);
+
+    const queue = Array.isArray(data.queue)
+      ? data.queue.filter(key => typeof key === "string" && cmap.has(key))
+      : [];
+
+    const historyKeys = Array.isArray(data.historyKeys)
+      ? data.historyKeys.filter(key => typeof key === "string" && cmap.has(key))
+      : [];
+
+    const seen = new Set([...queue, ...historyKeys]);
+    for (const item of catalog) {
+      if (!seen.has(item.key)) queue.push(item.key);
+    }
+
+    return {
+      schemaVersion: 2,
+      cycle: Number.isFinite(data.cycle) ? data.cycle : 1,
+      catalog,
+      queue,
+      historyKeys,
+      total: catalog.length,
+      prefs: {
+        mode: data?.prefs?.mode === "ids" ? "ids" : "current",
+        recentWindow: Number.isFinite(data?.prefs?.recentWindow) ? data.prefs.recentWindow : 5,
+        imgBase: DEFAULT_IMG_BASE
+      },
+      rosterSource: activeCatalogSource,
+      rosterFetchedAt: Date.now()
+    };
+  }
+
+  function renderImage(entry) {
+    if (!entry) {
       heroImg.src = "";
       heroImg.alt = "";
       return;
     }
-    const url = killerImgUrl(state.prefs.imgBase, name);
-    heroImg.src = url;
+
+    const preferred = entry.image || killerImgUrl(state.prefs.imgBase, entry.name);
+    heroImg.alt = entry.name;
+    heroImg.src = preferred;
+
     heroImg.onerror = () => {
-      heroImg.onerror=null;
-      heroImg.src = `data:image/svg+xml,` +
-        encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><rect width='100%' height='100%' fill='%230c0e12'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%237d869c' font-family='sans-serif' font-size='18'>${name||"?"}</text></svg>`);
+      heroImg.onerror = null;
+      const fallback = killerImgUrl(state.prefs.imgBase, entry.name);
+
+      if (preferred !== fallback && fallback) {
+        heroImg.src = fallback;
+        heroImg.onerror = () => {
+          heroImg.onerror = null;
+          heroImg.src = `data:image/svg+xml,${encodeURIComponent(
+            `<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><rect width='100%' height='100%' fill='%230c0e12'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%237d869c' font-family='sans-serif' font-size='18'>${entry.name || "?"}</text></svg>`
+          )}`;
+        };
+      } else {
+        heroImg.src = `data:image/svg+xml,${encodeURIComponent(
+          `<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><rect width='100%' height='100%' fill='%230c0e12'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%237d869c' font-family='sans-serif' font-size='18'>${entry.name || "?"}</text></svg>`
+        )}`;
+      }
     };
   }
 
-  // ===== APP STATE =====
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  enableIndexedDbPersistence(db).catch(()=>{});
-  const DEFAULT_IMG_BASE = "https://otz-addon-tierlist.pages.dev/public/killers/";
+  function getCurrentCatalogMap() {
+    return catalogMap(state.catalog);
+  }
 
-  const $ = id => document.getElementById(id);
-  const authStatus=$("authStatus"), syncStatus=$("syncStatus"),
-        controlsCard=$("controlsCard"), mainCard=$("mainCard"), listCard=$("listCard"),
-        heroImg=$("heroImg"), cycleEl=$("cycle"), nextEl=$("nextItem"),
-        posEl=$("position"), totalEl=$("total"), emptyMsg=$("emptyMsg"),
-        remainingList=$("remainingList"), recentHistory=$("recentHistory"),
-        markPlayedBtn=$("markPlayedBtn"), skipBtn=$("skipBtn"), resetCycleBtn=$("resetCycleBtn"),
-        exportBtn=$("exportBtn"), importBtn=$("importBtn"), importFile=$("importFile"),
-        useNamesChk=$("useNamesChk"), rosterMode=$("rosterMode"), recentWindowSel=$("recentWindow"),
-        googleLoginBtn = document.getElementById("googleLoginBtn");
+  function render() {
+    controlsCard.style.display = "block";
+    mainCard.style.display = "block";
+    listCard.style.display = "block";
 
-  let userDocRef=null;
-  let isGoogleUser = false; // <--- NUEVO
+    cycleEl.textContent = String(state.cycle || 1);
+    totalEl.textContent = String(state.total || state.catalog.length || 0);
 
-  const state = {
-    uid:null, cycle:1, queue:[], index:0, history:[],
-    roster:[], total:0,
-    prefs:{ useNames:true, mode:"current", recentWindow:5, imgBase:DEFAULT_IMG_BASE }
-  };
+    const cmap = getCurrentCatalogMap();
+    const currentKey = state.queue[0] || null;
+    const currentEntry = currentKey ? cmap.get(currentKey) : null;
 
-  // Utilidades
-  function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
-  const buildRoster = mode => (mode==="ids" ? Array.from({length:KILLERS.length},(_,i)=>String(i+1)) : [...KILLERS]);
-
-  function render(){
-    controlsCard.style.display="block"; mainCard.style.display="block"; listCard.style.display="block";
-    if (cycleEl) cycleEl.textContent = String(state.cycle);
-    totalEl.textContent=state.total;
-    const remainingIdxs = state.queue.slice(state.index);
-
-    if (remainingIdxs.length===0){
-      nextEl.textContent="—"; posEl.textContent="—"; emptyMsg.style.display="block";
-      heroImg.src=""; heroImg.alt="";
-    }else{
-      const currentIdx = remainingIdxs[0];
-      const currentName = state.roster && typeof currentIdx === "number" ? state.roster[currentIdx] : null;
-      nextEl.textContent=currentName || "—";
-      posEl.textContent=String(state.index+1); emptyMsg.style.display="none";
-      renderImage(currentName);
+    if (!currentEntry) {
+      nextEl.textContent = "—";
+      posEl.textContent = "—";
+      emptyMsg.style.display = "block";
+      heroImg.src = "";
+      heroImg.alt = "";
+    } else {
+      nextEl.textContent = displayValueForEntry(currentEntry, state.prefs.mode);
+      posEl.textContent = String((state.total - state.queue.length) + 1);
+      emptyMsg.style.display = "none";
+      renderImage(currentEntry);
     }
 
-    // Chips restantes
-    remainingList.innerHTML = remainingIdxs.map(i=>{
-      const name = state.roster && typeof i === "number" ? state.roster[i] : null;
-      const img = killerImgUrl(state.prefs.imgBase, name);
-      return `<span class="pill"><img${img ? ` src="${img}"` : ""} alt="" onerror="this.src='';this.style.background='#0c0e12'">${name||"—"}</span>`;
+    remainingList.innerHTML = state.queue.map(key => {
+      const entry = cmap.get(key);
+      if (!entry) return "";
+      const img = entry.image || killerImgUrl(state.prefs.imgBase, entry.name);
+      const label = escapeHtml(displayValueForEntry(entry, state.prefs.mode));
+      return `<span class="pill"><img src="${img}" alt="" onerror="this.onerror=null;this.src='';this.style.background='#0c0e12'">${label}</span>`;
     }).join("");
 
-    // Historial
-    const hist = (state.history.slice(-12).reverse());
-    recentHistory.innerHTML = hist.length ? `<ul>${hist.map(v=>`<li>${v}</li>`).join("")}</ul>`
-                                        : `<p class="muted">Sin historial aún.</p>`;
+    const hist = state.historyKeys.slice(-12).reverse().map(key => {
+      const entry = cmap.get(key);
+      return entry ? escapeHtml(displayValueForEntry(entry, state.prefs.mode)) : escapeHtml(key);
+    });
+
+    recentHistory.innerHTML = hist.length
+      ? `<ul>${hist.map(v => `<li>${v}</li>`).join("")}</ul>`
+      : `<p class="muted">Sin historial aún.</p>`;
   }
 
-  async function ensureDoc(){
+  function violatesRecentWindow(candidateKey, historyKeys, prefs) {
+    const w = Number(prefs?.recentWindow || 0);
+    if (!w) return false;
+    return historyKeys.slice(-w).includes(candidateKey);
+  }
+
+  async function ensureDoc() {
     const snap = await getDoc(userDocRef);
-    if (!snap.exists()){
-      const roster = buildRoster(state.prefs.mode);
-      const queue = shuffle(Array.from({length:roster.length},(_,i)=>i));
+
+    if (!snap.exists()) {
+      const initial = normalizeStoredData(null, activeCatalog);
       await setDoc(userDocRef, {
-        cycle:1, roster, queue, index:0, history:[], total:roster.length,
-        prefs: state.prefs, rosterVersion:"2025-09-05", updatedAt: serverTimestamp()
+        ...initial,
+        updatedAt: serverTimestamp()
       });
-    } else {
-      // Si el roster guardado es más corto que el actual, añadir nuevos killers al final sin reiniciar el ciclo
-      const data = snap.data();
-      const currentRoster = buildRoster(state.prefs.mode);
-      if (Array.isArray(data.roster) && data.roster.length < currentRoster.length) {
-        // Encontrar los nuevos asesinos
-        const oldRoster = data.roster;
-        const newKillers = currentRoster.filter(k => !oldRoster.includes(k));
-        // Añadir los nuevos asesinos al final del roster y de la cola
-        const updatedRoster = [...oldRoster, ...newKillers];
-        const updatedQueue = [...(data.queue || [])];
-        // Añadir los índices de los nuevos asesinos al final de la cola
-        for (let i = oldRoster.length; i < updatedRoster.length; ++i) {
-          updatedQueue.push(i);
-        }
-        await setDoc(userDocRef, {
-          ...data,
-          roster: updatedRoster,
-          queue: updatedQueue,
-          total: updatedRoster.length,
-          updatedAt: serverTimestamp()
-        }, { merge: true });
-      }
+      return;
     }
+
+    const current = normalizeStoredData(snap.data(), activeCatalog);
+    await setDoc(userDocRef, {
+      ...current,
+      updatedAt: serverTimestamp()
+    }, { merge: false });
   }
 
-  function violatesRecentWindow(value){
-    const w = Number(state.prefs.recentWindow||0);
-    if(!w) return false;
-    return state.history.slice(-w).includes(value);
-  }
+  async function advance(markPlayed = true) {
+    await runTransaction(db, async tx => {
+      const s = await tx.get(userDocRef);
+      if (!s.exists()) throw new Error("Documento no encontrado");
 
-  async function advance(markPlayed=true){
-    await runTransaction(db, async tx=>{
-      const s = await tx.get(userDocRef); if(!s.exists()) throw new Error("Documento no encontrado");
-      let { cycle, roster, queue, index, history=[], total, prefs } = s.data();
-      const visible = i => roster[i];
+      const docData = normalizeStoredData(s.data(), activeCatalog);
+      const allKeys = docData.catalog.map(item => item.key);
 
-      if(queue.length===0 || index>=queue.length){
-        roster = buildRoster(prefs.mode);
-        queue = shuffle(Array.from({length:roster.length},(_,i)=>i));
-        index = 0; total = roster.length; cycle = (cycle||1)+1;
-      } else if (markPlayed){
-        const currentIdx = queue[index]; const currentVal = visible(currentIdx);
-        history.push(currentVal); index += 1;
-        if (index>=queue.length){
-          roster = buildRoster(prefs.mode);
-          queue = shuffle(Array.from({length:roster.length},(_,i)=>i));
-          index=0; total=roster.length; cycle=(cycle||1)+1;
+      if (!docData.queue.length) {
+        docData.queue = shuffle(allKeys);
+        docData.cycle = (docData.cycle || 1) + 1;
+      } else if (markPlayed) {
+        const currentKey = docData.queue.shift();
+        if (currentKey) docData.historyKeys.push(currentKey);
+
+        if (!docData.queue.length) {
+          docData.queue = shuffle(allKeys);
+          docData.cycle = (docData.cycle || 1) + 1;
         }
       } else {
-        if(index < queue.length-1){
-          let rotated = queue.slice(index);
+        if (docData.queue.length > 1) {
+          const rotated = [...docData.queue];
           const head = rotated.shift();
-          let pos=-1;
-          for(let k=0;k<rotated.length;k++){ const cand=visible(rotated[k]); if(!violatesRecentWindow(cand)){pos=k;break;} }
-          if(pos>-1){ const [x]=rotated.splice(pos,1); rotated.unshift(x); }
+          let pos = -1;
+
+          for (let i = 0; i < rotated.length; i++) {
+            if (!violatesRecentWindow(rotated[i], docData.historyKeys, docData.prefs)) {
+              pos = i;
+              break;
+            }
+          }
+
+          if (pos > -1) {
+            const [picked] = rotated.splice(pos, 1);
+            rotated.unshift(picked);
+          }
+
           rotated.push(head);
-          queue = queue.slice(0,index).concat(rotated);
+          docData.queue = rotated;
         }
       }
-      tx.update(userDocRef,{cycle, roster, queue, index, history, total, updatedAt: serverTimestamp()});
+
+      docData.total = docData.catalog.length;
+      docData.rosterSource = activeCatalogSource;
+      docData.rosterFetchedAt = Date.now();
+
+      tx.set(userDocRef, {
+        ...docData,
+        updatedAt: serverTimestamp()
+      }, { merge: false });
     });
   }
 
-  async function resetCycle(forceModeChange=false){
-    await runTransaction(db, async tx=>{
-      const s = await tx.get(userDocRef); if(!s.exists()) throw new Error("Documento no encontrado");
-      let { cycle, prefs } = s.data(); if(forceModeChange) prefs = state.prefs;
-      const roster = buildRoster(prefs.mode);
-      const queue = shuffle(Array.from({length:roster.length},(_,i)=>i));
-      tx.update(userDocRef,{cycle:(cycle||1)+1, roster, queue, index:0, total:roster.length, prefs, rosterVersion:"2025-09-05", updatedAt: serverTimestamp()});
+  async function resetCycle() {
+    await runTransaction(db, async tx => {
+      const s = await tx.get(userDocRef);
+      if (!s.exists()) throw new Error("Documento no encontrado");
+
+      const docData = normalizeStoredData(s.data(), activeCatalog);
+      docData.queue = shuffle(docData.catalog.map(item => item.key));
+      docData.cycle = (docData.cycle || 1) + 1;
+      docData.total = docData.catalog.length;
+      docData.rosterSource = activeCatalogSource;
+      docData.rosterFetchedAt = Date.now();
+
+      tx.set(userDocRef, {
+        ...docData,
+        updatedAt: serverTimestamp()
+      }, { merge: false });
     });
   }
 
-  // Exportar/Importar
-  exportBtn.addEventListener("click", async ()=>{
-    const snap = await getDoc(userDocRef); const data = snap.data();
-    const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
-    const url = URL.createObjectURL(blob); const a=document.createElement("a");
-    a.href=url; a.download="dbd_queue_state.json"; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-  });
-  importBtn.addEventListener("click",()=>importFile.click());
-  importFile.addEventListener("change", async e=>{
-    const file=e.target.files?.[0]; if(!file) return;
-    const text=await file.text();
-    try{ const data=JSON.parse(text); await setDoc(userDocRef,{...data,updatedAt:serverTimestamp()},{merge:false}); }
-    catch(err){ alert("Archivo inválido: "+err.message); }
-  });
-
-  // Preferencias
-  if (useNamesChk) {
-    useNamesChk.addEventListener("change", async ()=>{
-      state.prefs.useNames = useNamesChk.checked;
-      await updateDoc(userDocRef,{prefs:state.prefs,updatedAt:serverTimestamp()}); render();
-    });
-  }
-  if (rosterMode) {
-    rosterMode.addEventListener("change", async ()=>{
-      state.prefs.mode = rosterMode.value;
-      await updateDoc(userDocRef,{prefs:state.prefs,updatedAt:serverTimestamp()});
-      await resetCycle(true);
-    });
-  }
-  if (recentWindowSel) {
-    recentWindowSel.addEventListener("change", async ()=>{
-      state.prefs.recentWindow = Number(recentWindowSel.value);
-      await updateDoc(userDocRef,{prefs:state.prefs,updatedAt:serverTimestamp()});
-    });
-  }
-  // imgBaseInput eliminado, ya no se usa
-
-  // Botones y atajos
-  $("markPlayedBtn").addEventListener("click",()=>advance(true));
-  $("skipBtn").addEventListener("click",()=>advance(false));
-  $("resetCycleBtn").addEventListener("click",()=>resetCycle());
-  window.addEventListener("keydown",e=>{
-    if(e.target.tagName==="INPUT"||e.target.tagName==="SELECT") return;
-    if(e.key.toLowerCase()==="j") advance(true);
-    if(e.key.toLowerCase()==="k") advance(false);
-    if(e.key.toLowerCase()==="r") resetCycle();
+  exportBtn.addEventListener("click", async () => {
+    const snap = await getDoc(userDocRef);
+    const data = snap.data();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "dbd_queue_state.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   });
 
-  // Auth + Sync
-  let unsub=null;
-  onAuthStateChanged(auth, async (user)=>{
-    if(user){
-      isGoogleUser = !user.isAnonymous;
-      authStatus.textContent = user.isAnonymous
-        ? `Autenticado (anónimo)`
-        : `Autenticado con Google${user.email ? " ("+user.email+")" : ""}`;
-      userDocRef = doc(db,"users",user.uid,"dbdQueue","current");
-      state.prefs.imgBase = DEFAULT_IMG_BASE;
-      await ensureDoc();
-      if(unsub) unsub();
-      unsub = onSnapshot(userDocRef,(snap)=>{
-        if(snap.exists()){
-          const data=snap.data();
-          state.cycle=data.cycle||1; state.queue=data.queue||[]; state.index=data.index||0;
-          state.history=data.history||[]; state.roster=data.roster||buildRoster(state.prefs.mode);
-          state.total=data.total||state.roster.length; state.prefs=data.prefs||state.prefs;
-          if (useNamesChk) useNamesChk.checked=state.prefs.useNames ?? true;
-          if (rosterMode) rosterMode.value=state.prefs.mode ?? "current";
-          if (recentWindowSel) recentWindowSel.value=String(state.prefs.recentWindow ?? 5);
-          render(); syncStatus.textContent="Sincronizado.";
-        } else {
-          syncStatus.textContent="Documento no encontrado.";
-        }
-      },err=>syncStatus.textContent=`Error de sincronización: ${err.message}`);
-      controlsCard.style.display="block"; mainCard.style.display="block"; listCard.style.display="block";
-      // Cambia el botón a "Cerrar sesión" si es Google
-      if (googleLoginBtn) {
-        googleLoginBtn.textContent = isGoogleUser ? "Cerrar sesión" : "Iniciar sesión con Google";
-      }
-    } else {
-      signInAnonymously(auth).catch(err=>{
-        authStatus.textContent = `Error de autenticación: ${err.code} — ${err.message}`;
-        console.error(err);
-      });
-      isGoogleUser = false;
-      authStatus.textContent="No autenticado.";
-      if (googleLoginBtn) {
-        googleLoginBtn.textContent = "Iniciar sesión con Google";
-      }
+  importBtn.addEventListener("click", () => importFile.click());
+
+  importFile.addEventListener("change", async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const normalized = normalizeStoredData(parsed, activeCatalog);
+
+      await setDoc(userDocRef, {
+        ...normalized,
+        updatedAt: serverTimestamp()
+      }, { merge: false });
+    } catch (err) {
+      alert("Archivo inválido: " + err.message);
     }
+
+    importFile.value = "";
+  });
+
+  markPlayedBtn.addEventListener("click", () => advance(true));
+  skipBtn.addEventListener("click", () => advance(false));
+  resetCycleBtn.addEventListener("click", () => resetCycle());
+
+  window.addEventListener("keydown", e => {
+    const tag = e.target?.tagName;
+    if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+
+    const key = e.key.toLowerCase();
+    if (key === "j") advance(true);
+    if (key === "k") advance(false);
+    if (key === "r") resetCycle();
   });
 
   setPersistence(auth, browserLocalPersistence).catch(console.error);
 
-  if (googleLoginBtn) {
-    googleLoginBtn.addEventListener("click", async () => {
-      if (isGoogleUser) {
-        // Si ya está logueado con Google, cerrar sesión
-        await auth.signOut();
-      } else {
-        const provider = new GoogleAuthProvider();
-        try {
-          await signInWithPopup(auth, provider);
-        } catch (err) {
-          alert("Error al iniciar sesión con Google: " + err.message);
-        }
-      }
-    });
+  googleLoginBtn.addEventListener("click", async () => {
+    if (isGoogleUser) {
+      await auth.signOut();
+      return;
+    }
+
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      alert("Error al iniciar sesión con Google: " + err.message);
+    }
+  });
+
+  try {
+    const loaded = await loadActiveCatalog();
+    activeCatalog = loaded.catalog;
+    activeCatalogSource = loaded.source;
+
+    dataSourceStatus.textContent = loaded.source === "api"
+      ? `Roster cargado desde API (${loaded.catalog.length} killers).`
+      : loaded.source === "cache"
+        ? `API no disponible. Usando caché local (${loaded.catalog.length} killers).`
+        : `API no disponible. Usando fallback local (${loaded.catalog.length} killers).`;
+  } catch (err) {
+    activeCatalog = fallbackCatalog();
+    activeCatalogSource = "fallback";
+    dataSourceStatus.textContent = `Error al preparar el roster. Usando fallback local (${activeCatalog.length} killers).`;
+    console.error(err);
   }
+
+  onAuthStateChanged(auth, async user => {
+    if (user) {
+      isGoogleUser = !user.isAnonymous;
+      authStatus.textContent = user.isAnonymous
+        ? "Autenticado (anónimo)"
+        : `Autenticado con Google${user.email ? ` (${user.email})` : ""}`;
+
+      googleLoginBtn.textContent = isGoogleUser ? "Cerrar sesión" : "Iniciar sesión con Google";
+
+      userDocRef = doc(db, "users", user.uid, "dbdQueue", "current");
+      state.prefs.imgBase = DEFAULT_IMG_BASE;
+
+      await ensureDoc();
+
+      if (unsub) unsub();
+
+      unsub = onSnapshot(userDocRef, snap => {
+        if (!snap.exists()) {
+          syncStatus.textContent = "Documento no encontrado.";
+          return;
+        }
+
+        const data = normalizeStoredData(snap.data(), activeCatalog);
+        state.uid = user.uid;
+        state.cycle = data.cycle;
+        state.queue = data.queue;
+        state.historyKeys = data.historyKeys;
+        state.catalog = data.catalog;
+        state.total = data.total;
+        state.prefs = data.prefs;
+        state.rosterSource = data.rosterSource || activeCatalogSource;
+
+        render();
+        syncStatus.textContent = "Sincronizado.";
+      }, err => {
+        syncStatus.textContent = `Error de sincronización: ${err.message}`;
+      });
+
+      controlsCard.style.display = "block";
+      mainCard.style.display = "block";
+      listCard.style.display = "block";
+    } else {
+      isGoogleUser = false;
+      googleLoginBtn.textContent = "Iniciar sesión con Google";
+      authStatus.textContent = "No autenticado.";
+
+      signInAnonymously(auth).catch(err => {
+        authStatus.textContent = `Error de autenticación: ${err.code} — ${err.message}`;
+        console.error(err);
+      });
+    }
+  });
 </script>
 </body>
 </html>
