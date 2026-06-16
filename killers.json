@@ -40,5 +40,6 @@
   { "key": "killer:the-ghoul", "name": "The Ghoul" },
   { "key": "killer:the-houndmaster", "name": "The Houndmaster" },
   { "key": "killer:the-krasue", "name": "The Krasue" },
-  { "key": "killer:the-first", "name": "The First" }
+  { "key": "killer:the-first", "name": "The First" },
+  { "key": "killer:the-slasher", "name": "The Slasher", "image": "https://deadbydaylight.wiki.gg/images/K43_TheSlasher_Portrait.png?2fe4c9" }
 ]
