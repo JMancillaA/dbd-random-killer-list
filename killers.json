@@ -40,7 +40,7 @@
   { "key": "killer:the-ghoul", "name": "The Ghoul" },
   { "key": "killer:the-houndmaster", "name": "The Houndmaster" },
   { "key": "killer:the-krasue", "name": "The Krasue" },
-  { "key": "killer:the-first", "name": "The First" },
+  { "key": "killer:the-first", "name": "The First", "image": "https://deadbydaylight.com/static/46fd87ede14695260195ddbc2691f431/defbc/DBD_POUTINE_WEBPAGE_Character_Page_THEFIRST_ONLY_58ed00b1f5.png" },
   { "key": "killer:the-slasher", "name": "The Slasher", "image": "https://deadbydaylight.wiki.gg/images/K43_TheSlasher_Portrait.png?2fe4c9" },
-  { "key": "killer:the-judgment", "name": "The Judgment" }
+  { "key": "killer:the-judgment", "name": "The Judgment", "image": "https://deadbydaylight.com/static/31dfb99c3863c874547592463c4785b7/77ac4/DBD_UDON_CHAPTER_STAND_ALONE_RENDERS_WEB_ASSETS_THE_JUDGMENT_CHARACTER_ONLY_af1b049c5a.png" }
 ]
