@@ -3,145 +3,1384 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>DBD Killer Randomizer</title>
-  <meta name="color-scheme" content="dark light" />
+  <title>Dead by Daylight — Rotación de Asesinos</title>
+  <meta name="color-scheme" content="dark" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 42' fill='none'%3E%3Crect width='40' height='42' rx='6' fill='%23070708'/%3E%3Cpath d='M8 7L7 35M15 6L14 36M22 7L21 35M29 8L28 34M4 28L35 13' stroke='%23ffffff' stroke-width='3.4' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Cinzel:wght@600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0e0f12; --card: #16181d; --muted: #8a90a2; --text: #e8ecf3; --accent: #7aa2ff;
-      --border: #20232b; --chip: #1b1f27; --chip-border: #2a2f3a; --ok: #27c3a7; --warn: #ffcc66;
-    }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      background: radial-gradient(1000px 600px at 20% -10%, #182036, transparent),
-                  radial-gradient(900px 500px at 120% 10%, #211a3a, transparent), var(--bg);
-      color: var(--text);
-      font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      padding: 28px 16px 60px;
-    }
-    
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(15px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes popIn {
-      0% { opacity: 0; transform: scale(0.9); }
-      70% { transform: scale(1.03); }
-      100% { opacity: 1; transform: scale(1); }
-    }
-    .animate-up { animation: fadeInUp 0.5s ease-out forwards; }
-    .animate-pop { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+      /* Monochrome Noir Palette — Pitch Black, Fog Ash & Stark White */
+      --fog-pitch: #070708;
+      --charred-iron: #111113;
+      --iron-elevated: #18181b;
+      --rusted-seam: #27272b;
+      --tarnished-brass: #45454d;
+      --bone-ash: #f4f4f6;
+      --weathered-slate: #a0a0ab;
+      --muted-ash: #63636e;
+      --stark-white: #ffffff;
+      --silver-mist: #d4d4dc;
 
-    .wrap { max-width: 1100px; margin: 0 auto; }
-    h1 { margin: 0 0 8px; font-weight: 800; letter-spacing: -0.5px; }
-    p.muted { color: var(--muted); margin: 0 0 12px; }
-    
-    .card {
-      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
-      border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin: 16px 0;
-      box-shadow: 0 12px 40px rgba(0,0,0,.3); backdrop-filter: blur(12px);
-      transition: border-color 0.3s ease;
+      --font-display: 'Cinzel', Georgia, serif;
+      --font-ui: 'Chakra Petch', system-ui, -apple-system, sans-serif;
     }
-    .card:hover { border-color: #2c313d; }
-    
-    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      min-height: 100%;
+      margin: 0;
+      background-color: var(--fog-pitch);
+      color: var(--bone-ash);
+      font-family: var(--font-ui);
+      font-size: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-image:
+        radial-gradient(ellipse 80% 50% at 22% 15%, rgba(255, 255, 255, 0.06), transparent 70%),
+        radial-gradient(ellipse 70% 60% at 85% 90%, rgba(255, 255, 255, 0.035), transparent 70%),
+        repeating-linear-gradient(
+          0deg,
+          rgba(255, 255, 255, 0.008) 0px,
+          rgba(255, 255, 255, 0.008) 1px,
+          transparent 1px,
+          transparent 3px
+        );
+      padding: 0 20px 64px;
+    }
+
+    /* Killer Portrait Reveal, Polyhedral Dice Tumble & Coin Flip Animations */
+    @keyframes killerReveal {
+      0% {
+        opacity: 0;
+        transform: scale(0.95);
+        filter: brightness(1.8) contrast(1.4) grayscale(100%);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+        filter: brightness(1) contrast(1) grayscale(0%);
+      }
+    }
+
+    @keyframes dieTumble {
+      0% {
+        transform: translateY(-28px) scale(0.65) rotateX(35deg) rotateY(-40deg) rotateZ(-140deg);
+        opacity: 0;
+      }
+      22% {
+        transform: translateY(10px) scale(1.08) rotateX(-25deg) rotateY(45deg) rotateZ(-45deg);
+        opacity: 1;
+      }
+      48% {
+        transform: translateY(-10px) scale(0.96) rotateX(28deg) rotateY(-30deg) rotateZ(55deg);
+      }
+      72% {
+        transform: translateY(4px) scale(1.04) rotateX(-12deg) rotateY(18deg) rotateZ(-12deg);
+      }
+      88% {
+        transform: translateY(0) scale(1) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+        filter: drop-shadow(0 0 22px rgba(255, 255, 255, 0.65));
+      }
+      100% {
+        transform: translateY(0) scale(1.02) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+        filter: drop-shadow(0 0 28px rgba(255, 255, 255, 0.85));
+      }
+    }
+
+    @keyframes dieTumbleUnits {
+      0% {
+        transform: translateY(-22px) scale(0.65) rotateX(-35deg) rotateY(45deg) rotateZ(150deg);
+        opacity: 0;
+      }
+      26% {
+        transform: translateY(12px) scale(1.07) rotateX(22deg) rotateY(-40deg) rotateZ(50deg);
+        opacity: 1;
+      }
+      52% {
+        transform: translateY(-8px) scale(0.95) rotateX(-24deg) rotateY(32deg) rotateZ(-45deg);
+      }
+      76% {
+        transform: translateY(5px) scale(1.03) rotateX(10deg) rotateY(-15deg) rotateZ(14deg);
+      }
+      90% {
+        transform: translateY(0) scale(1) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+        filter: drop-shadow(0 0 22px rgba(255, 255, 255, 0.65));
+      }
+      100% {
+        transform: translateY(0) scale(1.02) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+        filter: drop-shadow(0 0 28px rgba(255, 255, 255, 0.85));
+      }
+    }
+
+    @keyframes coinFlip {
+      0% {
+        transform: translateY(24px) scale(0.75) rotateY(0deg) rotateX(15deg);
+        opacity: 0;
+      }
+      25% {
+        transform: translateY(-22px) scale(1.1) rotateY(360deg) rotateX(-10deg);
+        opacity: 1;
+      }
+      55% {
+        transform: translateY(-6px) scale(1.04) rotateY(720deg) rotateX(8deg);
+      }
+      82% {
+        transform: translateY(3px) scale(1) rotateY(1080deg) rotateX(0deg);
+        filter: drop-shadow(0 0 22px rgba(255, 255, 255, 0.65));
+      }
+      100% {
+        transform: translateY(0) scale(1.02) rotateY(1080deg) rotateX(0deg);
+        filter: drop-shadow(0 0 28px rgba(255, 255, 255, 0.85));
+      }
+    }
+
+    @keyframes d20RingPulse {
+      0% {
+        transform: scale(0.5);
+        opacity: 0;
+      }
+      70% {
+        transform: scale(1);
+        opacity: 0.45;
+      }
+      100% {
+        transform: scale(1.45);
+        opacity: 0;
+      }
+    }
+
+    .reveal-active {
+      animation: killerReveal 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal-active,
+      .d20-overlay.is-rolling .d20-svg,
+      .d20-overlay.is-rolling .d20-shockwave {
+        animation: none !important;
+      }
+      * {
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    /* Top Bar / Header Ledger */
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 22px 0 18px;
+      border-bottom: 1px solid var(--rusted-seam);
+      margin-bottom: 28px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .tally-emblem {
+      width: 34px;
+      height: 36px;
+      flex-shrink: 0;
+      stroke: var(--stark-white);
+      filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.28));
+    }
+
+    .brand-text h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: 0.02em;
+      color: var(--stark-white);
+      line-height: 1.15;
+    }
+
+    .brand-text p {
+      margin: 2px 0 0;
+      font-size: 0.9rem;
+      color: var(--weathered-slate);
+      max-width: 65ch;
+    }
+
+    .session-bar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .status-cluster {
+      text-align: right;
+      font-size: 0.85rem;
+      line-height: 1.3;
+    }
+
+    .status-auth {
+      color: var(--bone-ash);
+      font-weight: 500;
+    }
+
+    .status-sync {
+      color: var(--weathered-slate);
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .sync-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--muted-ash);
+      display: inline-block;
+    }
+
+    .sync-dot.is-synced {
+      background: var(--stark-white);
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+    }
+
+    /* Main Two-Column Asymmetric Layout */
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(320px, 430px) 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+
+    /* Architectural Slabs */
+    .slab {
+      background: var(--charred-iron);
+      border: 1px solid var(--rusted-seam);
+      position: relative;
+    }
+
+    .altar-slab {
+      padding: 24px;
+      background: linear-gradient(180deg, #161619 0%, #0d0d0f 100%);
+      border-color: var(--tarnished-brass);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75);
+    }
+
+    .altar-slab::before,
+    .altar-slab::after {
+      content: "";
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-color: var(--stark-white);
+      border-style: solid;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+
+    .altar-slab::before {
+      top: -1px;
+      left: -1px;
+      border-width: 2px 0 0 2px;
+    }
+
+    .altar-slab::after {
+      bottom: -1px;
+      right: -1px;
+      border-width: 0 2px 2px 0;
+    }
+
+    /* Active Killer Stage (Left Column Hero) */
+    .dossier-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--rusted-seam);
+    }
+
+    .dossier-turn {
+      font-size: 0.9rem;
+      color: var(--weathered-slate);
+      font-weight: 500;
+    }
+
+    .dossier-badges {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dossier-die-badge {
+      font-size: 0.8rem;
+      color: var(--silver-mist);
+      font-weight: 600;
+      background: #0c0c0e;
+      border: 1px solid var(--rusted-seam);
+      padding: 2px 8px;
+    }
+
+    .dossier-cycle-badge {
+      font-size: 0.85rem;
+      color: var(--stark-white);
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      padding: 2px 10px;
+    }
+
+    .portrait-stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background:
+        radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.16), rgba(7, 7, 8, 0.96) 74%),
+        #050506;
+      border: 1px solid var(--rusted-seam);
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      margin-bottom: 20px;
+      box-shadow: inset 0 0 44px rgba(0, 0, 0, 0.9);
+      perspective: 700px;
+    }
+
+    .portrait-stage::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 55%, rgba(7, 7, 8, 0.92) 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .portrait-stage img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      position: relative;
+      z-index: 1;
+      transform-origin: center bottom;
+      transition: opacity 0.15s ease;
+    }
+
+    .portrait-stage img.is-hidden-for-roll {
+      opacity: 0;
+    }
+
+    /* Polyhedral Dice & Coin Rolling Stage Overlay */
+    .d20-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      background: radial-gradient(circle at 50% 50%, rgba(18, 18, 22, 0.92), rgba(7, 7, 8, 0.98));
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease;
+    }
+
+    .d20-overlay.is-rolling {
+      opacity: 1;
+    }
+
+    .d20-rig {
+      position: relative;
+      min-width: 132px;
+      min-height: 132px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      transform-style: preserve-3d;
+    }
+
+    .d20-die-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .d20-die-sublabel {
+      font-size: 0.7rem;
+      color: var(--muted-ash);
+      letter-spacing: 0.06em;
+    }
+
+    .d20-shockwave {
+      position: absolute;
+      width: 126px;
+      height: 126px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .d20-overlay.is-rolling .d20-shockwave {
+      animation: d20RingPulse 0.68s ease-out forwards;
+    }
+
+    .d20-svg {
+      width: 120px;
+      height: 120px;
+      overflow: visible;
+      filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.85));
+    }
+
+    .d20-overlay.is-dual .d20-svg {
+      width: 102px;
+      height: 102px;
+    }
+
+    .d20-overlay.is-rolling:not(.is-coin) .d20-svg-primary {
+      animation: dieTumble 0.68s cubic-bezier(0.2, 0.85, 0.3, 1) forwards;
+    }
+
+    .d20-overlay.is-rolling:not(.is-coin) .d20-svg-units {
+      animation: dieTumbleUnits 0.68s cubic-bezier(0.2, 0.85, 0.3, 1) forwards;
+    }
+
+    .d20-overlay.is-rolling.is-coin .d20-svg-primary {
+      animation: coinFlip 0.68s cubic-bezier(0.2, 0.85, 0.3, 1) forwards;
+    }
+
+    .d20-outer {
+      fill: #121215;
+      stroke: var(--stark-white);
+      stroke-width: 2.2;
+      stroke-linejoin: round;
+    }
+
+    .d20-inner-face {
+      fill: rgba(255, 255, 255, 0.06);
+      stroke: var(--stark-white);
+      stroke-width: 1.8;
+      stroke-linejoin: round;
+    }
+
+    .d20-struts {
+      stroke: rgba(255, 255, 255, 0.42);
+      stroke-width: 1.25;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .d20-number {
+      font-family: var(--font-display);
+      font-size: 21px;
+      font-weight: 800;
+      fill: var(--stark-white);
+      text-anchor: middle;
+      dominant-baseline: central;
+      user-select: none;
+    }
+
+    .d20-number.is-compact {
+      font-size: 16px;
+      letter-spacing: 0.03em;
+    }
+
+    .d20-caption {
+      font-size: 0.82rem;
+      letter-spacing: 0.05em;
+      color: var(--weathered-slate);
+    }
+
+    .killer-identity {
+      margin-bottom: 22px;
+    }
+
+    .killer-name {
+      font-family: var(--font-display);
+      font-size: clamp(1.75rem, 3vw, 2.35rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin: 0 0 6px;
+      color: var(--stark-white);
+      letter-spacing: 0.01em;
+    }
+
+    .killer-position-line {
+      margin: 0;
+      font-size: 0.95rem;
+      color: var(--weathered-slate);
+    }
+
+    .killer-position-line strong {
+      color: var(--stark-white);
+      font-weight: 600;
+    }
+
+    /* Buttons & Controls */
     button {
-      padding: 10px 16px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer;
-      background: #1b1f27; color: var(--text); font-weight: 500;
-      transition: all 0.2s ease;
+      font-family: var(--font-ui);
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 11px 16px;
+      border: 1px solid var(--rusted-seam);
+      background: var(--iron-elevated);
+      color: var(--bone-ash);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
     }
-    button:hover { background: #262c38; border-color: #384252; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-    button:active { transform: translateY(1px); box-shadow: none; }
-    
-    .btn-ok { background: #1f3a35; border-color: #2c5c50; color: #a3e6d8; }
-    .btn-ok:hover { background: #264a43; border-color: #377364; }
-    .btn-warn { background: #3a2f1f; border-color: #6a5638; color: #ffdca3; }
-    .btn-warn:hover { background: #4a3c28; border-color: #856c46; }
-    
-    .muted { color: var(--muted); }
-    details summary { cursor: pointer; user-select: none; font-weight: 600; margin-bottom: 10px;}
-    
-    .hero { display: grid; grid-template-columns: 180px 1fr; gap: 20px; align-items: center; }
-    .hero .art {
-      width: 180px; height: 180px; border-radius: 16px; overflow: hidden; border: 1px solid var(--border);
-      background: #0c0e12; display: grid; place-items: center; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+
+    button:hover {
+      background: #242429;
+      border-color: var(--tarnished-brass);
     }
-    .hero .art img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    
-    .hero .meta small { color: var(--muted); }
-    .hero .title { font-size: 2rem; font-weight: 800; margin: 2px 0 8px; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
-    
-    .pill {
-      display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border: 1px solid var(--chip-border);
-      border-radius: 999px; background: var(--chip); margin: 4px 6px 0 0; white-space: nowrap; font-size: 0.9rem;
-      transition: background 0.2s;
+
+    button:focus-visible,
+    input:focus-visible,
+    summary:focus-visible {
+      outline: 2px solid var(--stark-white);
+      outline-offset: 2px;
     }
-    .pill:hover { background: #252b36; }
-    .pill img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; background: #0c0e12; border: 1px solid #333; }
-    
-    .kbd { font-family: ui-monospace, SFMono-Regular, monospace; background: #11151c; border: 1px solid #2c3544; padding: 2px 8px; border-radius: 6px; font-size: 0.85rem; color: #a1abc0; }
-    .status-line { margin-top: 8px; font-size: 0.9rem; }
-    
-    @media (max-width: 640px) {
-      .hero { grid-template-columns: 1fr; text-align: center; }
-      .hero .art { width: 100%; max-width: 240px; height: 240px; margin: 0 auto; }
-      .row { justify-content: center; }
+
+    button:active {
+      background: #141417;
+    }
+
+    .action-stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    /* Stark White Primary CTA */
+    .btn-primary-trial {
+      width: 100%;
+      padding: 14px 18px;
+      font-size: 1.05rem;
+      background: var(--bone-ash);
+      border-color: var(--stark-white);
+      color: #09090b;
+      justify-content: space-between;
+      box-shadow: 0 6px 24px rgba(255, 255, 255, 0.12);
+    }
+
+    .btn-primary-trial:hover {
+      background: var(--stark-white);
+      border-color: var(--stark-white);
+      color: #000000;
+      box-shadow: 0 8px 28px rgba(255, 255, 255, 0.22);
+    }
+
+    .btn-primary-trial .kbd {
+      background: #09090b;
+      color: var(--stark-white);
+      border-color: #27272b;
+    }
+
+    .action-secondary-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .btn-Subtle {
+      justify-content: space-between;
+      font-size: 0.85rem;
+      padding: 10px 12px;
+    }
+
+    .btn-Subtle:disabled {
+      opacity: 0.38;
+      cursor: not-allowed;
+    }
+
+    .btn-reset.is-confirming {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: var(--stark-white);
+      color: var(--stark-white);
+    }
+
+    .btn-session {
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      background: transparent;
+      border-color: var(--tarnished-brass);
+    }
+
+    .btn-settings {
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      background: #121215;
+      border-color: var(--tarnished-brass);
+      gap: 7px;
+    }
+
+    .btn-settings svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      flex-shrink: 0;
+    }
+
+    .btn-settings:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+      border-color: var(--rusted-seam);
+      background: #0c0c0e;
+    }
+
+    /* Account Roster Settings Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(5, 5, 6, 0.84);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-backdrop.is-open {
+      display: flex;
+    }
+
+    .modal-dialog {
+      width: 100%;
+      max-width: 820px;
+      max-height: 90vh;
+      background: var(--charred-iron);
+      border: 1px solid var(--stark-white);
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.9);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--rusted-seam);
+    }
+
+    .modal-header h2 {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      margin: 0;
+      color: var(--stark-white);
+    }
+
+    .modal-header p {
+      margin: 4px 0 0;
+      font-size: 0.86rem;
+      color: var(--weathered-slate);
+    }
+
+    .btn-close-modal {
+      padding: 6px 10px;
+      font-size: 0.9rem;
+      background: transparent;
+      border-color: var(--rusted-seam);
+      line-height: 1;
+    }
+
+    .modal-body {
+      padding: 18px 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .settings-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .settings-search {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .settings-bulk-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .settings-count-pill {
+      font-size: 0.84rem;
+      color: var(--weathered-slate);
+      padding: 5px 10px;
+      border: 1px solid var(--rusted-seam);
+      background: #0a0a0c;
+    }
+
+    .settings-count-pill strong {
+      color: var(--stark-white);
+    }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+      gap: 8px;
+      max-height: 360px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .settings-grid::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .settings-grid::-webkit-scrollbar-track {
+      background: #09090b;
+    }
+
+    .settings-grid::-webkit-scrollbar-thumb {
+      background: var(--rusted-seam);
+    }
+
+    .killer-toggle-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      background: #0d0d10;
+      border: 1px solid var(--tarnished-brass);
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+    }
+
+    .killer-toggle-card.is-disabled {
+      opacity: 0.45;
+      border-color: var(--rusted-seam);
+      background: #08080a;
+    }
+
+    .killer-toggle-card.is-disabled .roster-thumb {
+      filter: grayscale(100%);
+    }
+
+    .killer-toggle-check {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--stark-white);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 16px 24px;
+      border-top: 1px solid var(--rusted-seam);
+      background: #0c0c0e;
+    }
+
+    .settings-feedback {
+      font-size: 0.85rem;
+      color: var(--weathered-slate);
+    }
+
+    .modal-footer-actions {
+      display: flex;
+      gap: 10px;
+      margin-left: auto;
+    }
+
+    .btn-save-settings {
+      background: var(--bone-ash);
+      border-color: var(--stark-white);
+      color: #09090b;
+      padding: 9px 18px;
+    }
+
+    .btn-save-settings:hover {
+      background: var(--stark-white);
+      color: #000000;
+    }
+
+    .kbd {
+      font-family: var(--font-ui);
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      background: rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: var(--bone-ash);
+      line-height: 1.2;
+    }
+
+    .notice-banner {
+      margin-top: 14px;
+      padding: 10px 12px;
+      font-size: 0.88rem;
+      border-left: 3px solid var(--stark-white);
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--bone-ash);
+      display: none;
+    }
+
+    /* Right Column: Progress, Collapsible Queue & Recent Ledger */
+    .ledger-column {
+      display: grid;
+      gap: 22px;
+    }
+
+    .ledger-slab {
+      padding: 22px 24px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin: 0;
+      color: var(--stark-white);
+    }
+
+    .section-meta {
+      font-size: 0.9rem;
+      color: var(--weathered-slate);
+    }
+
+    /* Progress Bar & Tally Counter */
+    .progress-track {
+      width: 100%;
+      height: 10px;
+      background: #080809;
+      border: 1px solid var(--rusted-seam);
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #6e6e77 0%, #c8c8d0 65%, var(--stark-white) 100%);
+      transition: width 0.3s ease;
+    }
+
+    .tally-shelf {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      min-height: 24px;
+    }
+
+    .tally-group {
+      width: 22px;
+      height: 20px;
+      stroke: var(--stark-white);
+      opacity: 0.9;
+    }
+
+    .tally-caption {
+      font-size: 0.85rem;
+      color: var(--weathered-slate);
+    }
+
+    /* Collapsible Queue Dropdown (<details>) */
+    .queue-dropdown {
+      margin: 0;
+    }
+
+    .queue-summary {
+      list-style: none;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 2px 0;
+    }
+
+    .queue-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .queue-summary-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .queue-toggle-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border: 1px solid var(--rusted-seam);
+      background: #0d0d0f;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--bone-ash);
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+
+    .queue-summary:hover .queue-toggle-pill {
+      border-color: var(--tarnished-brass);
+      background: #17171b;
+    }
+
+    .queue-chevron {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      transition: transform 0.2s ease;
+    }
+
+    .queue-dropdown[open] .queue-chevron {
+      transform: rotate(180deg);
+    }
+
+    .queue-body {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--rusted-seam);
+    }
+
+    .queue-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .search-input {
+      font-family: var(--font-ui);
+      font-size: 0.9rem;
+      padding: 8px 12px;
+      background: #09090b;
+      border: 1px solid var(--rusted-seam);
+      color: var(--bone-ash);
+      width: 100%;
+    }
+
+    .search-input::placeholder {
+      color: var(--muted-ash);
+    }
+
+    .roster-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+      gap: 10px;
+      max-height: 410px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .roster-grid::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .roster-grid::-webkit-scrollbar-track {
+      background: #09090b;
+    }
+
+    .roster-grid::-webkit-scrollbar-thumb {
+      background: var(--rusted-seam);
+    }
+
+    .roster-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      background: #0c0c0e;
+      border: 1px solid var(--rusted-seam);
+      transition: border-color 0.15s ease;
+    }
+
+    .roster-item.is-up-next {
+      border-color: var(--stark-white);
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .roster-thumb {
+      width: 38px;
+      height: 38px;
+      flex-shrink: 0;
+      background: #060607;
+      border: 1px solid var(--rusted-seam);
+      object-fit: cover;
+    }
+
+    .roster-info {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .roster-order {
+      font-size: 0.75rem;
+      color: var(--weathered-slate);
+      display: block;
+      line-height: 1.1;
+    }
+
+    .roster-item.is-up-next .roster-order {
+      color: var(--stark-white);
+      font-weight: 700;
+    }
+
+    .roster-name {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--bone-ash);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+    }
+
+    /* Recent History Strip */
+    .history-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+      gap: 8px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 10px;
+      background: #0b0b0d;
+      border: 1px solid #202024;
+      opacity: 0.82;
+    }
+
+    .history-thumb {
+      width: 30px;
+      height: 30px;
+      object-fit: cover;
+      background: #060607;
+      border: 1px solid var(--rusted-seam);
+      filter: grayscale(85%);
+      flex-shrink: 0;
+    }
+
+    .history-name {
+      font-size: 0.85rem;
+      color: var(--weathered-slate);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Footer / Backup Utility Row */
+    .backup-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-top: 16px;
+      margin-top: 18px;
+      border-top: 1px solid var(--rusted-seam);
+      font-size: 0.85rem;
+      color: var(--weathered-slate);
+    }
+
+    .backup-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-utility {
+      padding: 6px 12px;
+      font-size: 0.82rem;
+      background: #0c0c0e;
+    }
+
+    .empty-state {
+      margin: 0;
+      padding: 16px;
+      background: #0b0b0d;
+      border: 1px dashed var(--rusted-seam);
+      color: var(--weathered-slate);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 900px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+      .altar-slab {
+        max-width: 520px;
+        margin: 0 auto;
+        width: 100%;
+      }
+      .status-cluster {
+        text-align: left;
+      }
+      .status-sync {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 520px) {
+      body {
+        padding: 0 14px 48px;
+      }
+      .action-secondary-row,
+      .add-killer-bar {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="animate-up" style="animation-delay: 0s;">
-    <h1>DBD Killer Randomizer</h1>
-    <p class="muted">Orden aleatorio de asesinos sin repetidos hasta completar el ciclo.</p>
-  </div>
-
-  <div class="card animate-up" style="animation-delay: 0.1s;">
-    <div id="authStatus" class="muted">Conectando…</div>
-    <div id="syncStatus" class="muted status-line"></div>
-    <button id="googleLoginBtn" style="margin-top:12px">Iniciar sesión con Google</button>
-  </div>
-
-  <div class="card animate-up" id="controlsCard" style="display:none; animation-delay: 0.2s;">
-    <p class="muted" style="margin:0">
-      Atajos: <span class="kbd">J</span> Jugado · <span class="kbd">K</span> Saltar · <span class="kbd">R</span> Reiniciar
-    </p>
-  </div>
-
-  <div class="card animate-up" id="mainCard" style="display:none; animation-delay: 0.3s;">
-    <div class="hero">
-      <div class="art"><img id="heroImg" alt="Retrato" loading="eager"></div>
-      <div class="meta">
-        <div class="title"><span id="nextItem">–</span></div>
-        <div class="muted">Ciclo <span id="cycle" style="color:var(--text); font-weight:600;">–</span> | Posición <span id="position" style="color:var(--text); font-weight:600;">–</span> de <span id="total">–</span></div>
-        
-        <div class="row" style="margin-top:16px">
-          <button id="markPlayedBtn" class="btn-ok">Marcar Jugado</button>
-          <button id="skipBtn">Saltar</button>
-          <button id="resetCycleBtn" class="btn-warn">Reiniciar Ciclo</button>
-          <button id="exportBtn">Exportar</button>
-          <input type="file" id="importFile" accept="application/json" style="display:none;">
-          <button id="importBtn">Importar</button>
-        </div>
-        <p class="muted" id="emptyMsg" style="display:none; margin-top:12px; color: var(--ok);">
-          ¡Lista terminada! Se creó un nuevo ciclo automáticamente.
-        </p>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand">
+      <svg class="tally-emblem" viewBox="0 0 40 42" fill="none" aria-hidden="true">
+        <path d="M7 5L6 37M15 4L14 38M23 5L22 37M31 6L30 36M3 29L36 12" stroke-width="3.2" stroke-linecap="round"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Dead by Daylight · Ciclo de Caza</h1>
+        <p>Rotación completa de asesinos sin repeticiones hasta cerrar el ciclo en la Niebla.</p>
       </div>
     </div>
-  </div>
 
-  <div class="card animate-up" id="listCard" style="display:none; animation-delay: 0.4s;">
-    <details>
-      <summary>Lista restante</summary>
-      <div id="remainingList" style="margin-top: 10px;"></div>
-    </details>
-    <hr style="border:0; border-top:1px solid var(--border); margin: 16px 0;">
-    <details>
-      <summary>Historial reciente (últimos 12)</summary>
-      <div id="recentHistory" style="margin-top: 10px;"></div>
-    </details>
+    <div class="session-bar">
+      <div class="status-cluster">
+        <div id="authStatus" class="status-auth">Conectando con el archivo…</div>
+        <div class="status-sync">
+          <span id="syncDot" class="sync-dot"></span>
+          <span id="syncStatus">Preparando sesión</span>
+        </div>
+      </div>
+      <button id="settingsBtn" class="btn-settings" type="button" disabled title="Disponible solo con una cuenta de Google vinculada">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span>Ajustes</span>
+      </button>
+      <button id="googleLoginBtn" class="btn-session" type="button">Iniciar sesión con Google</button>
+    </div>
+  </header>
+
+  <main class="workspace" id="mainCard">
+    <!-- Left Column: Active Killer Altar -->
+    <section class="slab altar-slab" aria-labelledby="nextItem">
+      <div class="dossier-header">
+        <span class="dossier-cycle-badge">Ciclo <span id="cycle">1</span></span>
+      </div>
+
+      <div class="portrait-stage">
+        <img id="heroImg" alt="Retrato del asesino actual" loading="eager">
+
+        <!-- Dynamic Polyhedral Die / Coin Roll Overlay -->
+        <div id="d20Overlay" class="d20-overlay" aria-hidden="true">
+          <div class="d20-rig">
+            <div class="d20-shockwave"></div>
+            <div class="d20-die-slot">
+              <svg class="d20-svg d20-svg-primary" viewBox="0 0 100 100" fill="none">
+                <g id="dieGeometryGroup"></g>
+                <text id="d20Value" class="d20-number" x="50" y="48">00</text>
+              </svg>
+            </div>
+            <div class="d20-die-slot" id="unitsDieSlot" style="display:none;">
+              <svg class="d20-svg d20-svg-units" viewBox="0 0 100 100" fill="none">
+                <g id="unitsDieGeometryGroup"></g>
+                <text id="unitsDieValue" class="d20-number" x="50" y="48">0</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="killer-identity">
+        <h2 class="killer-name" id="nextItem">Cargando…</h2>
+        <p class="killer-position-line">
+          Asesino <strong id="position">–</strong> de <strong id="total">–</strong> en este ciclo
+        </p>
+      </div>
+
+      <div class="action-stack" id="controlsCard">
+        <button id="markPlayedBtn" class="btn-primary-trial" type="button" title="Atajo de teclado: J">
+          <span>Marcar como jugado</span>
+          <span class="kbd">J</span>
+        </button>
+
+        <div class="action-secondary-row">
+          <button id="skipBtn" class="btn-Subtle" type="button" title="Mueve este asesino al final de la cola actual (Atajo: K)">
+            <span>Enviar al final</span>
+            <span class="kbd">K</span>
+          </button>
+          <button id="undoBtn" class="btn-Subtle" type="button" disabled title="Devuelve el último asesino jugado al turno actual (Atajo: Z)">
+            <span>Deshacer</span>
+            <span class="kbd">Z</span>
+          </button>
+          <button id="resetCycleBtn" class="btn-Subtle btn-reset" type="button" title="Baraja todos los asesinos en un nuevo ciclo (Atajo: R)">
+            <span id="resetBtnLabel">Reiniciar ciclo</span>
+            <span class="kbd">R</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="emptyMsg" class="notice-banner" role="status">
+        Ciclo completado. Se ha barajado una nueva rotación automáticamente.
+      </div>
+    </section>
+
+    <!-- Right Column: Progress & Roster Ledger -->
+    <div class="ledger-column" id="listCard">
+      <!-- Progress Slab -->
+      <section class="slab ledger-slab" aria-label="Progreso del ciclo">
+        <div class="section-head">
+          <h2 class="section-title">Progreso del ciclo</h2>
+          <span class="section-meta"><strong id="playedCount">0</strong> completados · <strong id="remainingCount">0</strong> pendientes</span>
+        </div>
+        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressBarWrap">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="tally-shelf" id="tallyShelf" aria-hidden="true"></div>
+      </section>
+
+      <!-- Collapsible Remaining Queue Slab (Hidden by Default) -->
+      <section class="slab ledger-slab" aria-labelledby="queueHeading">
+        <details class="queue-dropdown" id="queueDetails">
+          <summary class="queue-summary">
+            <div class="queue-summary-left">
+              <h2 class="section-title" id="queueHeading">Cola en la Niebla</h2>
+              <span class="section-meta">Despliega para consultar el orden de los próximos asesinos</span>
+            </div>
+            <span class="queue-toggle-pill">
+              <span><span id="queueActionWord">Mostrar</span> (<span id="queueBadgeCount">0</span>)</span>
+              <svg class="queue-chevron" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </span>
+          </summary>
+
+          <div class="queue-body">
+            <div class="queue-toolbar">
+              <input
+                type="search"
+                id="queueSearch"
+                class="search-input"
+                placeholder="Buscar asesino en la cola…"
+                aria-label="Buscar asesino en la cola restante"
+              />
+            </div>
+            <div id="remainingList" class="roster-grid"></div>
+          </div>
+        </details>
+      </section>
+
+      <!-- Recent History & Backup Slab -->
+      <section class="slab ledger-slab" aria-labelledby="historyHeading">
+        <div class="section-head">
+          <h2 class="section-title" id="historyHeading">últimos jugados</h2>
+          <span class="section-meta">Últimos 12 asesinos jugados</span>
+        </div>
+        <div id="recentHistory" class="history-grid"></div>
+
+        <div class="backup-bar">
+          <span id="backupFeedback">Respaldo manual de tu rotación en JSON</span>
+          <div class="backup-actions">
+            <button id="exportBtn" class="btn-utility" type="button">Exportar respaldo</button>
+            <input type="file" id="importFile" accept="application/json" style="display:none;">
+            <button id="importBtn" class="btn-utility" type="button">Importar respaldo</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- Account Roster Settings Modal (Only accessible when linked with Google) -->
+<div id="settingsModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <div>
+        <h2 id="settingsModalTitle">Ajustes de asesinos</h2>
+        <p>Activa o desactiva los asesinos que participan en la rotación de tu cuenta.</p>
+      </div>
+      <button id="closeSettingsBtn" class="btn-close-modal" type="button" aria-label="Cerrar ajustes">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="settings-toolbar">
+        <input
+          type="search"
+          id="settingsSearch"
+          class="search-input settings-search"
+          placeholder="Filtrar asesinos…"
+          aria-label="Filtrar asesinos en ajustes"
+        />
+        <div class="settings-bulk-actions">
+          <span class="settings-count-pill">
+            <strong id="settingsActiveCount">0</strong> de <strong id="settingsTotalCount">0</strong> activos
+          </span>
+          <button id="selectAllKillersBtn" class="btn-utility" type="button">Activar todos</button>
+          <button id="invertKillersBtn" class="btn-utility" type="button">Invertir</button>
+        </div>
+      </div>
+
+      <div id="settingsKillerGrid" class="settings-grid"></div>
+    </div>
+
+    <div class="modal-footer">
+      <span id="settingsFeedback" class="settings-feedback">Los cambios se guardan en tu cuenta vinculada.</span>
+      <div class="modal-footer-actions">
+        <button id="cancelSettingsBtn" class="btn-utility" type="button">Cancelar</button>
+        <button id="saveSettingsBtn" class="btn-save-settings" type="button">Guardar cambios</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -177,11 +1416,103 @@
 
   const DEFAULT_IMG_BASE = "https://otz-addon-tierlist.pages.dev/public/killers/";
 
+  /* Polyhedral SVG Geometries for each Die Tier */
+  const D10_SVG = `
+    <polygon class="d20-outer" points="50,5 92,46 50,95 8,46" />
+    <path class="d20-struts" d="M8,46 L26,56 L50,66 L74,56 L92,46 M50,95 L26,56 M50,95 L74,56 M50,95 L50,66" />
+    <polygon class="d20-inner-face" points="50,5 74,56 50,66 26,56" />
+  `;
+
+  const DIE_GEOMETRIES = {
+    d100: {
+      textY: 48,
+      compactText: true,
+      svg: D10_SVG
+    },
+    d20: {
+      textY: 51,
+      compactText: false,
+      svg: `
+        <polygon class="d20-outer" points="50,5 91,27 91,73 50,95 9,73 9,27" />
+        <path class="d20-struts" d="M50,5 L50,24 M91,27 L73,62 M91,73 L73,62 M50,95 L27,62 M50,95 L73,62 M9,73 L27,62 M9,27 L27,62 M9,27 L50,24 M91,27 L50,24" />
+        <polygon class="d20-inner-face" points="50,24 73,62 27,62" />
+      `
+    },
+    d12: {
+      textY: 52,
+      compactText: false,
+      svg: `
+        <polygon class="d20-outer" points="50,5 76,13 93,36 93,64 76,87 50,95 24,87 7,64 7,36 24,13" />
+        <path class="d20-struts" d="M50,5 L50,23 M93,36 L76,41 M76,87 L66,72 M24,87 L34,72 M7,36 L24,41" />
+        <polygon class="d20-inner-face" points="50,23 76,41 66,72 34,72 24,41" />
+      `
+    },
+    d10: {
+      textY: 48,
+      compactText: false,
+      svg: D10_SVG
+    },
+    d8: {
+      textY: 45,
+      compactText: false,
+      svg: `
+        <polygon class="d20-outer" points="50,5 91,50 50,95 9,50" />
+        <path class="d20-struts" d="M9,50 L22,57 L78,57 L91,50 M50,5 L22,57 M50,5 L78,57 M50,95 L22,57 M50,95 L78,57" />
+        <polygon class="d20-inner-face" points="50,5 78,57 22,57" />
+      `
+    },
+    d6: {
+      textY: 55,
+      compactText: false,
+      svg: `
+        <polygon class="d20-outer" points="21,26 37,10 91,10 91,66 79,84 21,84" />
+        <path class="d20-struts" d="M21,26 L79,26 L91,10 M79,26 L79,84" />
+        <rect class="d20-inner-face" x="21" y="26" width="58" height="58" />
+      `
+    },
+    d4: {
+      textY: 60,
+      compactText: false,
+      svg: `
+        <polygon class="d20-outer" points="50,7 93,86 7,86" />
+        <path class="d20-struts" d="M50,7 L50,26 M93,86 L74,75 M7,86 L26,75" />
+        <polygon class="d20-inner-face" points="50,26 74,75 26,75" />
+      `
+    },
+    coin: {
+      textY: 50,
+      compactText: true,
+      svg: `
+        <circle class="d20-outer" cx="50" cy="50" r="42" />
+        <circle class="d20-struts" cx="50" cy="50" r="36" stroke-dasharray="3 3" />
+        <circle class="d20-inner-face" cx="50" cy="50" r="29" />
+        <path class="d20-struts" d="M39,35 L38,65 M45,34 L44,66 M51,35 L50,65 M57,36 L56,64 M34,58 L62,41" stroke-width="2.2" />
+      `
+    }
+  };
+
+  function getDieConfig(remainingCount) {
+    const n = Math.max(1, remainingCount || 1);
+    if (n > 20) return { id: "d100", sides: 100, isCoin: false, isDualD10: true };
+    if (n > 12) return { id: "d20", sides: 20, isCoin: false, isDualD10: false };
+    if (n > 10) return { id: "d12", sides: 12, isCoin: false, isDualD10: false };
+    if (n > 8)  return { id: "d10", sides: 10, isCoin: false, isDualD10: false };
+    if (n > 6)  return { id: "d8", sides: 8, isCoin: false, isDualD10: false };
+    if (n > 4)  return { id: "d6", sides: 6, isCoin: false, isDualD10: false };
+    if (n > 2)  return { id: "d4", sides: 4, isCoin: false, isDualD10: false };
+    return { id: "coin", sides: 2, isCoin: true, isDualD10: false };
+  }
+
   const $ = id => document.getElementById(id);
-  const authStatus = $("authStatus"), syncStatus = $("syncStatus");
-  const controlsCard = $("controlsCard"), mainCard = $("mainCard"), listCard = $("listCard");
+  const authStatus = $("authStatus"), syncStatus = $("syncStatus"), syncDot = $("syncDot");
   const heroImg = $("heroImg"), cycleEl = $("cycle"), nextEl = $("nextItem"), posEl = $("position"), totalEl = $("total");
   const emptyMsg = $("emptyMsg"), remainingList = $("remainingList"), recentHistory = $("recentHistory");
+  const playedCountEl = $("playedCount"), remainingCountEl = $("remainingCount"), queueBadgeCountEl = $("queueBadgeCount");
+  const progressFill = $("progressFill"), progressBarWrap = $("progressBarWrap"), tallyShelf = $("tallyShelf");
+  const queueSearch = $("queueSearch"), resetBtn = $("resetCycleBtn"), resetBtnLabel = $("resetBtnLabel");
+  const backupFeedback = $("backupFeedback");
+  const d20Overlay = $("d20Overlay"), d20Value = $("d20Value"), dieGeometryGroup = $("dieGeometryGroup");
+  const unitsDieSlot = $("unitsDieSlot"), unitsDieGeometryGroup = $("unitsDieGeometryGroup"), unitsDieValue = $("unitsDieValue");
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
@@ -192,11 +1523,30 @@
   let unsub = null;
   let isGoogleUser = false;
   let activeCatalog = [];
+  let lastRenderedKillerKey = null;
+  let resetConfirmTimeout = null;
+  let awaitingResetConfirm = false;
+  let d20RollTimer = null;
+  let d20TickInterval = null;
 
   const state = {
-    uid: null, cycle: 1, queue: [], historyKeys: [], catalog: [], total: 0,
+    uid: null, cycle: 1, queue: [], historyKeys: [], cyclePlayedKeys: [], catalog: [], total: 0,
+    disabledKeys: [],
     prefs: { mode: "current", recentWindow: 5, imgBase: DEFAULT_IMG_BASE }
   };
+
+  let draftDisabledSet = new Set();
+  let pendingAnonymousSnapshot = null;
+  const preloadedImages = new Map();
+
+  function preloadKillerImage(entry) {
+    if (!entry) return;
+    const url = entry.image || killerImgUrl(state.prefs.imgBase, entry.name);
+    if (!url || preloadedImages.has(url)) return;
+    const img = new Image();
+    img.src = url;
+    preloadedImages.set(url, img);
+  }
 
   function shuffle(a) {
     const arr = [...a];
@@ -218,11 +1568,17 @@
     return `${base}${slugifyKiller(name)}.png`;
   }
 
+  function fallbackSvgDataUri(name) {
+    const safeName = String(name || "?").replace(/[<>&"']/g, "");
+    return `data:image/svg+xml,${encodeURIComponent(
+      `<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><rect width='100%' height='100%' fill='%23070708'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23a0a0ab' font-family='serif' font-size='18'>${safeName}</text></svg>`
+    )}`;
+  }
+
   async function loadActiveCatalog() {
     try {
-      // cache: 'no-store' asegura que siempre descargue la última versión de tu JSON
       const res = await fetch('./killers.json', { cache: 'no-store' });
-      if (!res.ok) throw new Error("No se pudo leer el archivo JSON local");
+      if (!res.ok) throw new Error("No se pudo leer killers.json");
       return await res.json();
     } catch (err) {
       console.error("Error cargando killers.json:", err);
@@ -237,158 +1593,685 @@
   }
 
   function normalizeStoredData(data, latestCatalog) {
-    const catalog = latestCatalog || [];
+    const baseCatalog = latestCatalog || [];
+    const disabledKeys = (isGoogleUser && Array.isArray(data?.disabledKeys)) ? data.disabledKeys : [];
+    const disabledSet = new Set(disabledKeys);
+
+    const filteredCatalog = baseCatalog.filter(item => !disabledSet.has(item.key));
+    const catalog = filteredCatalog.length > 0 ? filteredCatalog : baseCatalog;
     const cmap = catalogMap(catalog);
 
     if (!data || !Array.isArray(data.queue)) {
       return {
         schemaVersion: 2, cycle: 1, catalog, queue: shuffle(catalog.map(i => i.key)),
-        historyKeys: [], total: catalog.length, prefs: { mode: "current", recentWindow: 5, imgBase: DEFAULT_IMG_BASE }
+        historyKeys: [], cyclePlayedKeys: [], total: catalog.length, disabledKeys,
+        prefs: { mode: "current", recentWindow: 5, imgBase: DEFAULT_IMG_BASE }
       };
     }
 
-    const queue = data.queue.filter(key => cmap.has(key));
-    const historyKeys = Array.isArray(data.historyKeys) ? data.historyKeys.filter(key => cmap.has(key)) : [];
-    
-    const seen = new Set([...queue, ...historyKeys]);
-    for (const item of catalog) {
-      if (!seen.has(item.key)) queue.push(item.key);
+    let queue = data.queue.filter(key => cmap.has(key));
+    const historyKeys = Array.isArray(data.historyKeys)
+      ? data.historyKeys.filter(key => cmap.has(key)).slice(-24)
+      : [];
+
+    // Track killers played strictly within the current cycle so previous cycles don't block new ones
+    let cyclePlayedKeys;
+    if (Array.isArray(data.cyclePlayedKeys)) {
+      cyclePlayedKeys = data.cyclePlayedKeys.filter(key => cmap.has(key));
+    } else {
+      const playedCountInCycle = Math.max(0, catalog.length - queue.length);
+      cyclePlayedKeys = playedCountInCycle > 0 ? historyKeys.slice(-playedCountInCycle) : [];
     }
 
-    return { ...data, catalog, queue, total: catalog.length, historyKeys };
+    const seenInCurrentCycle = new Set([...queue, ...cyclePlayedKeys]);
+    for (const item of catalog) {
+      if (!seenInCurrentCycle.has(item.key)) queue.push(item.key);
+    }
+
+    if (!queue.length && catalog.length) {
+      queue = shuffle(catalog.map(i => i.key));
+      cyclePlayedKeys = [];
+    }
+
+    return { ...data, catalog, queue, total: catalog.length, historyKeys, cyclePlayedKeys, disabledKeys };
   }
 
-  function renderImage(entry) {
-    if (!entry) { heroImg.src = ""; heroImg.alt = ""; return; }
-    
-    // Si el JSON tiene un enlace personalizado (entry.image), usa ese. Si no, busca en Otz.
-    const newSrc = entry.image || killerImgUrl(state.prefs.imgBase, entry.name);
-    
-    heroImg.classList.remove('animate-pop');
-    void heroImg.offsetWidth; 
-    heroImg.classList.add('animate-pop');
+  function renderTallies(completedCount) {
+    if (completedCount <= 0) {
+      tallyShelf.innerHTML = `<span class="tally-caption">Aún no hay sacrificios registrados en este ciclo.</span>`;
+      return;
+    }
 
+    const fullGroups = Math.floor(completedCount / 5);
+    const remainder = completedCount % 5;
+    const svgs = [];
+
+    for (let g = 0; g < fullGroups; g++) {
+      svgs.push(
+        `<svg class="tally-group" viewBox="0 0 28 24" fill="none"><path d="M4 3L3 21M10 3L9 21M16 3L15 21M22 3L21 21M1 17L26 6" stroke-width="2.3" stroke-linecap="round"/></svg>`
+      );
+    }
+
+    if (remainder > 0) {
+      const lines = [];
+      for (let r = 0; r < remainder; r++) {
+        const x = 4 + r * 6;
+        lines.push(`M${x} 3L${x - 1} 21`);
+      }
+      svgs.push(
+        `<svg class="tally-group" viewBox="0 0 28 24" fill="none"><path d="${lines.join(" ")}" stroke-width="2.3" stroke-linecap="round"/></svg>`
+      );
+    }
+
+    tallyShelf.innerHTML = svgs.join("");
+  }
+
+  function applyKillerPortrait(entry) {
+    const primarySrc = entry.image || killerImgUrl(state.prefs.imgBase, entry.name);
+    const secondarySrc = killerImgUrl(state.prefs.imgBase, entry.name);
     heroImg.alt = entry.name;
-    heroImg.src = newSrc;
-    
+    heroImg.src = primarySrc;
     heroImg.onerror = () => {
+      if (heroImg.src !== secondarySrc && entry.image) {
+        heroImg.src = secondarySrc;
+        return;
+      }
       heroImg.onerror = null;
-      heroImg.src = `data:image/svg+xml,${encodeURIComponent(
-        `<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><rect width='100%' height='100%' fill='%230c0e12'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%237d869c' font-family='sans-serif' font-size='18'>${entry.name || "?"}</text></svg>`
-      )}`;
+      heroImg.src = fallbackSvgDataUri(entry.name);
     };
   }
 
+  const TENS_FACES = ["00", "10", "20", "30", "40", "50", "60", "70", "80", "90"];
+
+  function updateRollFaces(dieConfig) {
+    if (dieConfig.isDualD10) {
+      d20Value.textContent = TENS_FACES[Math.floor(Math.random() * 10)];
+      unitsDieValue.textContent = String(Math.floor(Math.random() * 10));
+      return;
+    }
+    if (dieConfig.isCoin) {
+      d20Value.textContent = "";
+      return;
+    }
+    d20Value.textContent = String(Math.floor(Math.random() * dieConfig.sides) + 1);
+  }
+
+  function playDieReveal(entry, remainingCount) {
+    if (d20RollTimer) clearTimeout(d20RollTimer);
+    if (d20TickInterval) clearInterval(d20TickInterval);
+
+    const dieConfig = getDieConfig(remainingCount);
+    const geom = DIE_GEOMETRIES[dieConfig.id] || DIE_GEOMETRIES.d20;
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) {
+      nextEl.textContent = entry.name;
+      heroImg.classList.remove("is-hidden-for-roll");
+      applyKillerPortrait(entry);
+      return;
+    }
+
+    // Configure SVG geometry & text position for the current die tier
+    dieGeometryGroup.innerHTML = geom.svg;
+    d20Value.setAttribute("y", String(geom.textY));
+    d20Value.classList.toggle("is-compact", Boolean(geom.compactText));
+    d20Overlay.classList.toggle("is-coin", dieConfig.isCoin);
+    d20Overlay.classList.toggle("is-dual", Boolean(dieConfig.isDualD10));
+
+    if (dieConfig.isDualD10) {
+      unitsDieGeometryGroup.innerHTML = D10_SVG;
+      unitsDieSlot.style.display = "flex";
+    } else {
+      unitsDieSlot.style.display = "none";
+    }
+
+    // Preload portrait in the background while the die/coin animates
+    applyKillerPortrait(entry);
+    heroImg.classList.remove("reveal-active");
+    heroImg.classList.add("is-hidden-for-roll");
+
+    // Restart CSS animation cleanly
+    d20Overlay.classList.remove("is-rolling");
+    void d20Overlay.offsetWidth;
+    d20Overlay.classList.add("is-rolling");
+
+    updateRollFaces(dieConfig);
+
+    d20TickInterval = setInterval(() => {
+      updateRollFaces(dieConfig);
+    }, 55);
+
+    setTimeout(() => {
+      if (d20TickInterval) {
+        clearInterval(d20TickInterval);
+        d20TickInterval = null;
+      }
+      updateRollFaces(dieConfig);
+    }, 480);
+
+    d20RollTimer = setTimeout(() => {
+      d20Overlay.classList.remove("is-rolling");
+      heroImg.classList.remove("is-hidden-for-roll");
+      void heroImg.offsetWidth;
+      heroImg.classList.add("reveal-active");
+      nextEl.textContent = entry.name;
+      d20RollTimer = null;
+    }, 680);
+  }
+
+  function renderQueueList(cmap) {
+    const query = (queueSearch.value || "").toLowerCase().trim();
+    const itemsHtml = [];
+
+    state.queue.forEach((key, idx) => {
+      const entry = cmap.get(key);
+      if (!entry) return;
+      if (query && !entry.name.toLowerCase().includes(query)) return;
+
+      const img = entry.image || killerImgUrl(state.prefs.imgBase, entry.name);
+      const isCurrent = idx === 0;
+      const orderLabel = isCurrent ? "Turno actual (#1)" : `Turno #${idx + 1}`;
+      const fallback = fallbackSvgDataUri(entry.name);
+
+      itemsHtml.push(`
+        <div class="roster-item ${isCurrent ? 'is-up-next' : ''}">
+          <img class="roster-thumb" src="${img}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${fallback}'">
+          <div class="roster-info">
+            <span class="roster-order">${orderLabel}</span>
+            <span class="roster-name" title="${entry.name}">${entry.name}</span>
+          </div>
+        </div>
+      `);
+    });
+
+    if (!itemsHtml.length) {
+      remainingList.innerHTML = `<p class="empty-state">Ningún asesino en la cola coincide con "${queueSearch.value}".</p>`;
+    } else {
+      remainingList.innerHTML = itemsHtml.join("");
+    }
+  }
+
   function render() {
-    controlsCard.style.display = "block"; mainCard.style.display = "block"; listCard.style.display = "block";
+    const total = state.total || state.catalog.length || 0;
+    const remaining = state.queue.length;
+    const completed = Math.max(0, total - remaining);
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
     cycleEl.textContent = String(state.cycle || 1);
-    totalEl.textContent = String(state.total || state.catalog.length || 0);
+    totalEl.textContent = String(total);
+    playedCountEl.textContent = String(completed);
+    remainingCountEl.textContent = String(remaining);
+    queueBadgeCountEl.textContent = String(remaining);
+    progressFill.style.width = `${pct}%`;
+    progressBarWrap.setAttribute("aria-valuenow", String(pct));
+    renderTallies(completed);
 
     const cmap = catalogMap(state.catalog);
     const currentKey = state.queue[0] || null;
     const currentEntry = currentKey ? cmap.get(currentKey) : null;
+    const killerChanged = currentKey !== lastRenderedKillerKey;
+    lastRenderedKillerKey = currentKey;
+
+    $("undoBtn").disabled = !(Array.isArray(state.historyKeys) && state.historyKeys.length > 0);
+
+    // Preload the next 2 killers in queue for instant HD portrait reveal
+    if (state.queue[1]) preloadKillerImage(cmap.get(state.queue[1]));
+    if (state.queue[2]) preloadKillerImage(cmap.get(state.queue[2]));
 
     if (!currentEntry) {
-      nextEl.textContent = "—"; posEl.textContent = "—"; emptyMsg.style.display = "block"; renderImage(null);
+      nextEl.textContent = "Sin asesinos en cola";
+      posEl.textContent = "–";
+      emptyMsg.style.display = "block";
+      heroImg.src = fallbackSvgDataUri("Sin asesino");
+      heroImg.alt = "";
     } else {
-      nextEl.textContent = currentEntry.name;
-      posEl.textContent = String((state.total - state.queue.length) + 1);
-      emptyMsg.style.display = "none";
-      renderImage(currentEntry);
+      posEl.textContent = String(completed + 1);
+      if (killerChanged) {
+        playDieReveal(currentEntry, remaining);
+      } else {
+        nextEl.textContent = currentEntry.name;
+        applyKillerPortrait(currentEntry);
+      }
     }
 
-    remainingList.innerHTML = state.queue.map(key => {
-      const entry = cmap.get(key);
-      if (!entry) return "";
-      const img = entry.image || killerImgUrl(state.prefs.imgBase, entry.name);
-      return `<span class="pill"><img src="${img}" alt="" onerror="this.src='';this.style.background='#0c0e12'">${entry.name}</span>`;
-    }).join("");
+    renderQueueList(cmap);
 
-    const hist = state.historyKeys.slice(-12).reverse().map(key => cmap.get(key)?.name || key);
-    recentHistory.innerHTML = hist.length ? `<ul>${hist.map(v => `<li>${v}</li>`).join("")}</ul>` : `<p class="muted">Sin historial aún.</p>`;
+    const recentSlice = state.historyKeys.slice(-12).reverse();
+    if (!recentSlice.length) {
+      recentHistory.innerHTML = `<p class="empty-state" style="grid-column: 1 / -1;">Todavía no has completado partidas en el historial reciente.</p>`;
+    } else {
+      recentHistory.innerHTML = recentSlice.map(key => {
+        const entry = cmap.get(key);
+        const name = entry?.name || key;
+        const img = entry ? (entry.image || killerImgUrl(state.prefs.imgBase, entry.name)) : fallbackSvgDataUri(name);
+        const fallback = fallbackSvgDataUri(name);
+        return `
+          <div class="history-item">
+            <img class="history-thumb" src="${img}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${fallback}'">
+            <span class="history-name" title="${name}">${name}</span>
+          </div>
+        `;
+      }).join("");
+    }
   }
 
-  async function ensureDoc() {
+  async function ensureDoc(anonymousFallback = null) {
     const snap = await getDoc(userDocRef);
-    const dataToSave = normalizeStoredData(snap.exists() ? snap.data() : null, activeCatalog);
+    const sourceData = snap.exists() ? snap.data() : anonymousFallback;
+    const dataToSave = normalizeStoredData(sourceData, activeCatalog);
     await setDoc(userDocRef, { ...dataToSave, updatedAt: serverTimestamp() });
   }
 
   async function advance(markPlayed = true) {
+    if (!userDocRef) return;
+    clearResetConfirmation();
+    let wrappedNewCycle = false;
+
     await runTransaction(db, async tx => {
       const s = await tx.get(userDocRef);
       if (!s.exists()) return;
       const docData = normalizeStoredData(s.data(), activeCatalog);
-      
+
       if (!docData.queue.length) {
-        docData.queue = shuffle(docData.catalog.map(i => i.key)); docData.cycle++;
+        docData.queue = shuffle(docData.catalog.map(i => i.key));
+        docData.cyclePlayedKeys = [];
+        docData.cycle++;
+        wrappedNewCycle = true;
       } else if (markPlayed) {
         const currentKey = docData.queue.shift();
-        if (currentKey) docData.historyKeys.push(currentKey);
-        if (!docData.queue.length) { docData.queue = shuffle(docData.catalog.map(i => i.key)); docData.cycle++; }
+        if (currentKey) {
+          docData.historyKeys = [...docData.historyKeys, currentKey].slice(-24);
+          docData.cyclePlayedKeys = [...(docData.cyclePlayedKeys || []), currentKey];
+        }
+        if (!docData.queue.length) {
+          docData.queue = shuffle(docData.catalog.map(i => i.key));
+          docData.cyclePlayedKeys = [];
+          docData.cycle++;
+          wrappedNewCycle = true;
+        }
       } else {
         if (docData.queue.length > 1) {
-          const head = docData.queue.shift(); docData.queue.push(head); 
+          const head = docData.queue.shift();
+          docData.queue.push(head);
         }
       }
-      
+
       tx.set(userDocRef, { ...docData, updatedAt: serverTimestamp() }, { merge: false });
     });
+
+    emptyMsg.style.display = wrappedNewCycle ? "block" : "none";
+  }
+
+  async function undoLastPlayed() {
+    if (!userDocRef) return;
+    clearResetConfirmation();
+
+    await runTransaction(db, async tx => {
+      const s = await tx.get(userDocRef);
+      if (!s.exists()) return;
+      const docData = normalizeStoredData(s.data(), activeCatalog);
+      if (!docData.historyKeys.length) return;
+
+      const lastPlayedKey = docData.historyKeys.pop();
+      if (!lastPlayedKey) return;
+
+      // If we just wrapped into a brand-new cycle, step back to the end of the previous cycle
+      if (docData.queue.length === docData.catalog.length && docData.cycle > 1 && (!docData.cyclePlayedKeys || !docData.cyclePlayedKeys.length)) {
+        docData.cycle--;
+        docData.queue = [lastPlayedKey];
+        docData.cyclePlayedKeys = docData.catalog.map(i => i.key).filter(k => k !== lastPlayedKey);
+      } else {
+        docData.queue = [lastPlayedKey, ...docData.queue.filter(k => k !== lastPlayedKey)];
+        if (Array.isArray(docData.cyclePlayedKeys)) {
+          const idx = docData.cyclePlayedKeys.lastIndexOf(lastPlayedKey);
+          if (idx !== -1) docData.cyclePlayedKeys.splice(idx, 1);
+        }
+      }
+
+      tx.set(userDocRef, { ...docData, updatedAt: serverTimestamp() }, { merge: false });
+    });
+
+    emptyMsg.style.display = "none";
+  }
+
+  function clearResetConfirmation() {
+    awaitingResetConfirm = false;
+    resetBtn.classList.remove("is-confirming");
+    resetBtnLabel.textContent = "Reiniciar ciclo";
+    if (resetConfirmTimeout) {
+      clearTimeout(resetConfirmTimeout);
+      resetConfirmTimeout = null;
+    }
   }
 
   async function resetCycle() {
+    if (!userDocRef) return;
+
+    if (!awaitingResetConfirm) {
+      awaitingResetConfirm = true;
+      resetBtn.classList.add("is-confirming");
+      resetBtnLabel.textContent = "Confirmar reinicio";
+      resetConfirmTimeout = setTimeout(clearResetConfirmation, 3500);
+      return;
+    }
+
+    clearResetConfirmation();
+
     await runTransaction(db, async tx => {
       const s = await tx.get(userDocRef);
       if (!s.exists()) return;
       const docData = normalizeStoredData(s.data(), activeCatalog);
       docData.queue = shuffle(docData.catalog.map(item => item.key));
+      docData.cyclePlayedKeys = [];
       docData.cycle++;
+      lastRenderedKillerKey = null;
       tx.set(userDocRef, { ...docData, updatedAt: serverTimestamp() }, { merge: false });
     });
+
+    emptyMsg.style.display = "none";
   }
+
+  // Export & Import Handlers
+  $("exportBtn").addEventListener("click", () => {
+    const payload = {
+      schemaVersion: 2,
+      exportedAt: new Date().toISOString(),
+      cycle: state.cycle,
+      queue: state.queue,
+      historyKeys: state.historyKeys,
+      total: state.total,
+      disabledKeys: state.disabledKeys || [],
+      prefs: state.prefs
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `dbd-ciclo-${state.cycle || 1}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    backupFeedback.textContent = "Respaldo exportado.";
+  });
+
+  $("importBtn").addEventListener("click", () => {
+    $("importFile").click();
+  });
+
+  $("importFile").addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      if (!parsed || !Array.isArray(parsed.queue)) {
+        throw new Error("El archivo no contiene una cola válida.");
+      }
+      const normalized = normalizeStoredData(parsed, activeCatalog);
+      lastRenderedKillerKey = null;
+      if (userDocRef) {
+        await setDoc(userDocRef, { ...normalized, updatedAt: serverTimestamp() });
+      } else {
+        Object.assign(state, normalized);
+        render();
+      }
+      backupFeedback.textContent = `Respaldo importado (Ciclo ${normalized.cycle || 1}).`;
+    } catch (err) {
+      backupFeedback.textContent = `No se pudo importar: ${err.message}`;
+    } finally {
+      e.target.value = "";
+    }
+  });
+
+  queueSearch.addEventListener("input", () => {
+    renderQueueList(catalogMap(state.catalog));
+  });
+
+  $("queueDetails").addEventListener("toggle", (e) => {
+    $("queueActionWord").textContent = e.target.open ? "Ocultar" : "Mostrar";
+  });
+
+  // Account Roster Settings Logic (Requires Linked Google Account)
+  const settingsBtn = $("settingsBtn");
+  const settingsModal = $("settingsModal");
+  const settingsKillerGrid = $("settingsKillerGrid");
+  const settingsSearch = $("settingsSearch");
+  const settingsActiveCount = $("settingsActiveCount");
+  const settingsTotalCount = $("settingsTotalCount");
+  const settingsFeedback = $("settingsFeedback");
+
+  function renderSettingsGrid() {
+    const full = activeCatalog || [];
+    const query = (settingsSearch.value || "").toLowerCase().trim();
+    const activeCount = full.filter(i => !draftDisabledSet.has(i.key)).length;
+
+    settingsActiveCount.textContent = String(activeCount);
+    settingsTotalCount.textContent = String(full.length);
+
+    const cardsHtml = [];
+
+    full.forEach(entry => {
+      if (query && !entry.name.toLowerCase().includes(query)) return;
+      const isEnabled = !draftDisabledSet.has(entry.key);
+      const img = entry.image || killerImgUrl(state.prefs.imgBase, entry.name);
+      const fallback = fallbackSvgDataUri(entry.name);
+
+      cardsHtml.push(`
+        <label class="killer-toggle-card ${isEnabled ? '' : 'is-disabled'}" data-key="${entry.key}">
+          <input type="checkbox" class="killer-toggle-check" data-key="${entry.key}" ${isEnabled ? 'checked' : ''} />
+          <img class="roster-thumb" src="${img}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${fallback}'">
+          <div class="roster-info">
+            <span class="roster-name" title="${entry.name}">${entry.name}</span>
+            <span class="roster-order">${isEnabled ? 'Activo' : 'Desactivado'}</span>
+          </div>
+        </label>
+      `);
+    });
+
+    settingsKillerGrid.innerHTML = cardsHtml.length
+      ? cardsHtml.join("")
+      : `<p class="empty-state" style="grid-column: 1 / -1;">No hay asesinos que coincidan con "${settingsSearch.value}".</p>`;
+  }
+
+  function openSettingsModal() {
+    if (!isGoogleUser) return;
+    draftDisabledSet = new Set(state.disabledKeys || []);
+    settingsSearch.value = "";
+    settingsFeedback.textContent = "Los cambios se guardan en tu cuenta vinculada.";
+    renderSettingsGrid();
+    settingsModal.classList.add("is-open");
+  }
+
+  function closeSettingsModal() {
+    settingsModal.classList.remove("is-open");
+  }
+
+  settingsBtn.addEventListener("click", openSettingsModal);
+  $("closeSettingsBtn").addEventListener("click", closeSettingsModal);
+  $("cancelSettingsBtn").addEventListener("click", closeSettingsModal);
+  settingsModal.addEventListener("click", (e) => {
+    if (e.target === settingsModal) closeSettingsModal();
+  });
+
+  settingsSearch.addEventListener("input", renderSettingsGrid);
+
+  settingsKillerGrid.addEventListener("change", (e) => {
+    const check = e.target.closest(".killer-toggle-check");
+    if (!check) return;
+    const key = check.getAttribute("data-key");
+    if (!key) return;
+    if (check.checked) {
+      draftDisabledSet.delete(key);
+    } else {
+      draftDisabledSet.add(key);
+    }
+    renderSettingsGrid();
+  });
+
+  $("selectAllKillersBtn").addEventListener("click", () => {
+    draftDisabledSet.clear();
+    renderSettingsGrid();
+  });
+
+  $("invertKillersBtn").addEventListener("click", () => {
+    const full = activeCatalog || [];
+    const nextDisabled = new Set();
+    full.forEach(item => {
+      if (!draftDisabledSet.has(item.key)) nextDisabled.add(item.key);
+    });
+    draftDisabledSet = nextDisabled;
+    renderSettingsGrid();
+  });
+
+  $("saveSettingsBtn").addEventListener("click", async () => {
+    if (!isGoogleUser || !userDocRef) return;
+    const full = activeCatalog || [];
+    const enabledList = full.filter(i => !draftDisabledSet.has(i.key));
+    if (!enabledList.length) {
+      settingsFeedback.textContent = "Debes dejar al menos 1 asesino activo en la rotación.";
+      return;
+    }
+
+    const newDisabledKeys = Array.from(draftDisabledSet);
+    const enabledSet = new Set(enabledList.map(i => i.key));
+    const prevDisabledSet = new Set(state.disabledKeys || []);
+
+    settingsFeedback.textContent = "Guardando cambios…";
+
+    try {
+      await runTransaction(db, async tx => {
+        const s = await tx.get(userDocRef);
+        const raw = s.exists() ? s.data() : {};
+        let queue = Array.isArray(raw.queue) ? raw.queue.filter(k => enabledSet.has(k)) : [];
+        const historyKeys = Array.isArray(raw.historyKeys) ? raw.historyKeys.filter(k => enabledSet.has(k)).slice(-24) : [];
+        let cyclePlayedKeys = Array.isArray(raw.cyclePlayedKeys) ? raw.cyclePlayedKeys.filter(k => enabledSet.has(k)) : [];
+
+        // Re-enabled killers are inserted randomly into the remaining queue
+        const queueSet = new Set(queue);
+        const cyclePlayedSet = new Set(cyclePlayedKeys);
+        for (const item of enabledList) {
+          const wasReEnabled = prevDisabledSet.has(item.key);
+          if (!queueSet.has(item.key) && (wasReEnabled || !cyclePlayedSet.has(item.key))) {
+            const insertIdx = Math.floor(Math.random() * (queue.length + 1));
+            queue.splice(insertIdx, 0, item.key);
+            queueSet.add(item.key);
+            cyclePlayedKeys = cyclePlayedKeys.filter(k => k !== item.key);
+          }
+        }
+
+        let cycle = raw.cycle || 1;
+        if (!queue.length) {
+          queue = shuffle(enabledList.map(i => i.key));
+          cyclePlayedKeys = [];
+          cycle++;
+        }
+
+        const updatedDoc = {
+          ...raw,
+          schemaVersion: 2,
+          cycle,
+          catalog: enabledList,
+          queue,
+          historyKeys,
+          cyclePlayedKeys,
+          total: enabledList.length,
+          disabledKeys: newDisabledKeys,
+          updatedAt: serverTimestamp()
+        };
+
+        tx.set(userDocRef, updatedDoc, { merge: false });
+      });
+
+      closeSettingsModal();
+    } catch (err) {
+      settingsFeedback.textContent = `Error al guardar: ${err.message}`;
+    }
+  });
 
   $("markPlayedBtn").addEventListener("click", () => advance(true));
   $("skipBtn").addEventListener("click", () => advance(false));
-  $("resetCycleBtn").addEventListener("click", () => resetCycle());
-  
+  $("undoBtn").addEventListener("click", () => undoLastPlayed());
+  resetBtn.addEventListener("click", () => resetCycle());
+
   window.addEventListener("keydown", e => {
+    if (e.key === "Escape" && settingsModal.classList.contains("is-open")) {
+      closeSettingsModal();
+      return;
+    }
+    if (settingsModal.classList.contains("is-open")) return;
     if (["INPUT", "SELECT", "TEXTAREA"].includes(e.target?.tagName)) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
     const key = e.key.toLowerCase();
-    if (key === "j") advance(true); if (key === "k") advance(false); if (key === "r") resetCycle();
+    if (key === "j") advance(true);
+    if (key === "k") advance(false);
+    if (key === "z") undoLastPlayed();
+    if (key === "r") resetCycle();
   });
+
+  function updateSettingsButtonAccess() {
+    settingsBtn.disabled = !isGoogleUser;
+    settingsBtn.title = isGoogleUser
+      ? "Editar la lista de asesinos de tu cuenta"
+      : "Disponible solo con una cuenta de Google vinculada";
+    if (!isGoogleUser && settingsModal.classList.contains("is-open")) {
+      closeSettingsModal();
+    }
+  }
 
   (async () => {
     activeCatalog = await loadActiveCatalog();
-    
+
     setPersistence(auth, browserLocalPersistence).catch(console.error);
-    
+
     $("googleLoginBtn").addEventListener("click", async () => {
       if (isGoogleUser) { await auth.signOut(); return; }
-      try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (err) { alert("Error: " + err.message); }
+      try {
+        // Snapshot anonymous progress so a first-time Google login inherits it
+        if (auth.currentUser?.isAnonymous && state.queue.length) {
+          pendingAnonymousSnapshot = {
+            schemaVersion: 2,
+            cycle: state.cycle,
+            queue: [...state.queue],
+            historyKeys: [...(state.historyKeys || [])],
+            cyclePlayedKeys: [...(state.cyclePlayedKeys || [])],
+            prefs: { ...state.prefs }
+          };
+        }
+        await signInWithPopup(auth, new GoogleAuthProvider());
+      } catch (err) {
+        pendingAnonymousSnapshot = null;
+        syncStatus.textContent = "No se completó el inicio de sesión.";
+      }
     });
 
     onAuthStateChanged(auth, async user => {
       if (user) {
         isGoogleUser = !user.isAnonymous;
-        authStatus.textContent = user.isAnonymous ? "Autenticado (anónimo)" : `Sesión: ${user.email || 'Google'}`;
-        $("googleLoginBtn").textContent = isGoogleUser ? "Cerrar sesión" : "Iniciar sesión con Google";
+        updateSettingsButtonAccess();
+        authStatus.textContent = user.isAnonymous ? "Sesión local anónima" : `${user.email || 'Cuenta de Google'}`;
+        $("googleLoginBtn").textContent = isGoogleUser ? "Cerrar sesión" : "Vincular con Google";
         userDocRef = doc(db, "users", user.uid, "dbdQueue", "current");
-        
-        await ensureDoc();
+
+        const fallbackToMigrate = isGoogleUser ? pendingAnonymousSnapshot : null;
+        pendingAnonymousSnapshot = null;
+        await ensureDoc(fallbackToMigrate);
         if (unsub) unsub();
-        
+
         unsub = onSnapshot(userDocRef, snap => {
           if (!snap.exists()) return;
           const data = normalizeStoredData(snap.data(), activeCatalog);
           Object.assign(state, data, { uid: user.uid });
           render();
-          syncStatus.textContent = "Sincronizado con la nube.";
-          syncStatus.style.color = "var(--ok)";
+          syncStatus.textContent = "Sincronizado en la nube";
+          syncDot.classList.add("is-synced");
         });
       } else {
         isGoogleUser = false;
+        updateSettingsButtonAccess();
+        syncDot.classList.remove("is-synced");
         $("googleLoginBtn").textContent = "Iniciar sesión con Google";
-        authStatus.textContent = "No autenticado.";
+        authStatus.textContent = "Sin sesión activa";
         signInAnonymously(auth).catch(console.error);
       }
     });
