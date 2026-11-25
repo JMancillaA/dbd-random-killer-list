@@ -1668,17 +1668,25 @@
 
   function applyKillerPortrait(entry) {
     const primarySrc = entry.image || killerImgUrl(state.prefs.imgBase, entry.name);
-    const secondarySrc = killerImgUrl(state.prefs.imgBase, entry.name);
+    const secondarySrc = entry.fallbackImage || killerImgUrl(state.prefs.imgBase, entry.name);
     heroImg.alt = entry.name;
     heroImg.src = primarySrc;
     heroImg.onerror = () => {
-      if (heroImg.src !== secondarySrc && entry.image) {
+      if (heroImg.src !== secondarySrc && secondarySrc) {
         heroImg.src = secondarySrc;
         return;
       }
       heroImg.onerror = null;
       heroImg.src = fallbackSvgDataUri(entry.name);
     };
+  }
+
+  function thumbFallbackHandler(entry) {
+    const svgFallback = fallbackSvgDataUri(entry?.name);
+    if (entry?.fallbackImage) {
+      return `if(!this.dataset.fb){this.dataset.fb='1';this.src='${entry.fallbackImage}';}else{this.onerror=null;this.src='${svgFallback}';}`;
+    }
+    return `this.onerror=null;this.src='${svgFallback}'`;
   }
 
   const TENS_FACES = ["00", "10", "20", "30", "40", "50", "60", "70", "80", "90"];
@@ -1771,11 +1779,11 @@
       const img = entry.image || killerImgUrl(state.prefs.imgBase, entry.name);
       const isCurrent = idx === 0;
       const orderLabel = isCurrent ? "Turno actual (#1)" : `Turno #${idx + 1}`;
-      const fallback = fallbackSvgDataUri(entry.name);
+      const onErr = thumbFallbackHandler(entry);
 
       itemsHtml.push(`
         <div class="roster-item ${isCurrent ? 'is-up-next' : ''}">
-          <img class="roster-thumb" src="${img}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${fallback}'">
+          <img class="roster-thumb" src="${img}" alt="" loading="lazy" onerror="${onErr}">
           <div class="roster-info">
             <span class="roster-order">${orderLabel}</span>
             <span class="roster-name" title="${entry.name}">${entry.name}</span>
@@ -1844,10 +1852,10 @@
         const entry = cmap.get(key);
         const name = entry?.name || key;
         const img = entry ? (entry.image || killerImgUrl(state.prefs.imgBase, entry.name)) : fallbackSvgDataUri(name);
-        const fallback = fallbackSvgDataUri(name);
+        const onErr = thumbFallbackHandler(entry || { name });
         return `
           <div class="history-item">
-            <img class="history-thumb" src="${img}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${fallback}'">
+            <img class="history-thumb" src="${img}" alt="" loading="lazy" onerror="${onErr}">
             <span class="history-name" title="${name}">${name}</span>
           </div>
         `;
@@ -2055,12 +2063,12 @@
       if (query && !entry.name.toLowerCase().includes(query)) return;
       const isEnabled = !draftDisabledSet.has(entry.key);
       const img = entry.image || killerImgUrl(state.prefs.imgBase, entry.name);
-      const fallback = fallbackSvgDataUri(entry.name);
+      const onErr = thumbFallbackHandler(entry);
 
       cardsHtml.push(`
         <label class="killer-toggle-card ${isEnabled ? '' : 'is-disabled'}" data-key="${entry.key}">
           <input type="checkbox" class="killer-toggle-check" data-key="${entry.key}" ${isEnabled ? 'checked' : ''} />
-          <img class="roster-thumb" src="${img}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${fallback}'">
+          <img class="roster-thumb" src="${img}" alt="" loading="lazy" onerror="${onErr}">
           <div class="roster-info">
             <span class="roster-name" title="${entry.name}">${entry.name}</span>
             <span class="roster-order">${isEnabled ? 'Activo' : 'Desactivado'}</span>
